@@ -22,6 +22,10 @@ Only sync personally owned, reviewed rules. Do not upload company instructions, 
 ## Workflow
 Review the global rule and relevant category; add a project-level AGENTS.md; link to this canonical repository; implement and test; update overlays through reviewed commits. Keep a documented changelog.
 
+## Easy command-permission review
+
+Avoid opening or sharing your full `default.rules` file. Run `python3 bin/review-codex-rules.py` locally for a sanitized summary. See [command policy findings](docs/COMMAND-PERMISSIONS-REVIEW.md) and the [opt-in minimal approval template](templates/codex/minimal-approvals.proposed.rules). Never commit raw local command approvals, especially project-specific operations.
+
 ## First-time Mac import
 
 The October 17 initial local snapshot contained `config.safe.toml`, `rules/default.rules`, and bundled `.system` skills, but **no captured personal global AGENTS.md**. The revised capture excludes bundled skills; use `git pull --ff-only`, run `python3 -m unittest discover -s tests -v`, then run `python3 bin/codex-portable.py capture` again. The old snapshot is retained locally. Review each file before committing. See [docs/INITIAL-AUDIT.md](docs/INITIAL-AUDIT.md).
