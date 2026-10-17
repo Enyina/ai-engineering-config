@@ -15,6 +15,9 @@ ACTIONS = ("inspect", "personal-rules", "personal-export", "personal-onboard")
 OWNERS = {"personal": "personal", "employer": "organization"}
 
 def assess(root, action):
+    if (root / ".ai-rules").is_symlink():
+        return {"trust_domain": "unclassified", "operation": action,
+                "allowed": action == "inspect", "reason": "unsafe_declaration"}
     matches = [root / item for item in DECLARATIONS
                if (root / item).exists() or (root / item).is_symlink()]
     if len(matches) != 1:
