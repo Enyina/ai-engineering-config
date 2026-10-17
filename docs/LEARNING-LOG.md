@@ -93,3 +93,12 @@ Observed: The earlier public page hard-coded an order and list of visible sectio
 Candidate rule: When adding editable visibility/order state, test the actual render path and navigation, not just data selectors. Treat hiding from the landing page separately from unpublishing a route; preserve old links deliberately or redirect them. Match public professional claims to dated evidence, label prototypes honestly, and obtain approval for content removals.
 Verification: GitHub Actions tests on Enyina/newPortfolio main passed for live section selector wiring, featured/archive projections and all legacy slug routes. This does **not** verify Netlify deployment or browser UX.
 Source: Enyina/newPortfolio docs/CAREER_EVIDENCE_LEDGER.md and tests/public-portfolio.test.mjs; personal candidate learning/portfolio-evidence-review-2026-10-17.md.
+
+
+## 2026-10-17 — Preserve personal identity assets when applying reference layouts
+Scope: personal web-product and portfolio design
+Status: candidate rule; portfolio source test added, live visual acceptance pending
+Observed: Rebuilding a personal engineering portfolio around a text-centered Figma reference removed existing owner photographs from the visible site even though two usable source images remained available. The owner noticed that the new site felt impersonal.
+Candidate practice: During a design-reference adaptation, inventory valuable existing brand assets (especially the owner's portrait, logo and credibility cues), compare placement options and make an explicit keep/change decision. An aesthetically minimal template is not sufficient justification for silently dropping essential identity content. Prefer an authentic photo with responsive and accessible treatment; do not assume image quality without inspecting it.
+Validation: Enyina/newPortfolio now imports its original portrait into the hero, includes descriptive alternative text and a source-presence regression check. Responsive/browser visual quality and Netlify publication are still pending verification.
+Reference: Enyina/newPortfolio src/portfolio/FigmaPortfolio.jsx and tests/public-portfolio.test.mjs.
