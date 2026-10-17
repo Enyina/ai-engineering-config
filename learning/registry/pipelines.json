@@ -94,6 +94,80 @@
         "project_context"
       ],
       "status": "registered"
+    },
+    {
+      "id": "source-to-design-insight",
+      "inputs": [
+        "website_url",
+        "research"
+      ],
+      "outputs": [
+        "design_insight"
+      ],
+      "requires": [
+        "source_evidence",
+        "design_context"
+      ],
+      "status": "registered"
+    },
+    {
+      "id": "design-to-options",
+      "inputs": [
+        "design_brief",
+        "concept"
+      ],
+      "outputs": [
+        "design_options"
+      ],
+      "requires": [
+        "project_context",
+        "comparative_references"
+      ],
+      "status": "registered"
+    },
+    {
+      "id": "prototype-to-evaluation",
+      "inputs": [
+        "prototype",
+        "test_results"
+      ],
+      "outputs": [
+        "design_evaluation"
+      ],
+      "requires": [
+        "measured_results",
+        "user_context"
+      ],
+      "status": "registered"
+    },
+    {
+      "id": "usability-result-to-rule",
+      "inputs": [
+        "usability_result"
+      ],
+      "outputs": [
+        "rule_proposal"
+      ],
+      "requires": [
+        "sanitized_observed_evidence"
+      ],
+      "status": "registered"
+    },
+    {
+      "id": "source-to-engineering-insight",
+      "inputs": [
+        "website_url",
+        "repository_url",
+        "research"
+      ],
+      "outputs": [
+        "engineering_insight"
+      ],
+      "requires": [
+        "source_evidence",
+        "project_context"
+      ],
+      "status": "registered"
     }
   ]
 }
