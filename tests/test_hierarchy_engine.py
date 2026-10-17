@@ -80,6 +80,28 @@ class HierarchyTests(unittest.TestCase):
         self.assertNotIn("web.admin",ids)
         self.assertNotIn("editor.pointer",ids)
 
+    def test_missing_marker_shows_update_hint(self):
+        (self.workspace / ".ai-rules" / "workspace.json").unlink()
+        r, _ = self.invoke("resolve")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("Missing trust-domain marker", r.stderr)
+        self.assertIn("git -C <workspace> pull --ff-only", r.stderr)
+
+    def test_conflicting_markers_are_not_silently_accepted(self):
+        existing = (self.workspace / ".ai-rules" / "workspace.json").read_text()
+        (self.workspace / ".ai-rules" / "workspace.local.json").write_text(existing)
+        r, _ = self.invoke("resolve")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("Conflicting trust-domain markers", r.stderr)
+
+    def test_wrong_origin_detected_before_missing_marker(self):
+        (self.workspace / ".ai-rules" / "workspace.json").unlink()
+        self.make_repo("OtherOwner/otherRepo")
+        r, _ = self.invoke("resolve")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("Git origin differs", r.stderr)
+        self.assertNotIn("Missing trust-domain marker", r.stderr)
+
     def test_other_employer_denies_personal_policy(self):
         self.marker("employer")
         r,_ = self.invoke("resolve")
