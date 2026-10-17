@@ -1,0 +1,13 @@
+# Suggested minimal personal Codex approval policy
+#
+# REVIEW ONLY — copying this file to ~/.codex/rules/default.rules changes your
+# local approvals. Do NOT apply automatically. Retain the original as a
+# private, local-only backup and check actual tool/sandbox semantics first.
+#
+# Rule prefixes below are deliberately narrow. All other commands fall back
+# to Codex's normal effective approval and sandbox policies.
+prefix_rule(pattern=["git", "status"], decision="allow")
+prefix_rule(pattern=["git", "log", "--oneline"], decision="allow")
+prefix_rule(pattern=["git", "diff", "--cached", "--check"], decision="allow")
+prefix_rule(pattern=["rg", "--files"], decision="allow")
+prefix_rule(pattern=["docker", "ps"], decision="allow")
