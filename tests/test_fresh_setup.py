@@ -39,6 +39,50 @@ class FreshComputerSetupTests(unittest.TestCase):
             str(self.projects),"--state-dir",str(self.state),*arguments],
             capture_output=True,text=True,timeout=30)
 
+    def test_first_run_offers_download_but_decline_writes_nothing(self):
+        import runpy
+        mod=runpy.run_path(str(SCRIPT))
+        fn=mod["get_personal_projects"]
+        globals_=fn.__globals__
+        old=globals_.get("input")
+        globals_["input"]=lambda prompt: "n"
+        try:
+            fn(self.projects,{"moatt":"enyina/moatt","portfolio":"enyina/newPortfolio"})
+        finally:
+            if old is None:
+                globals_.pop("input",None)
+            else:
+                globals_["input"]=old
+        self.assertFalse((self.projects/"portfolio").exists())
+
+    def test_first_run_uses_only_approved_project_urls(self):
+        import runpy
+        from types import SimpleNamespace
+        mod=runpy.run_path(str(SCRIPT))
+        fn=mod["get_personal_projects"]
+        globals_=fn.__globals__
+        old_input=globals_.get("input")
+        old_command=globals_["command"]
+        calls=[]
+        globals_["input"]=lambda prompt: "y"
+        def fake_git(argv,timeout=15):
+            calls.append(argv)
+            return SimpleNamespace(returncode=0)
+        globals_["command"]=fake_git
+        try:
+            fn(self.projects,{"moatt":"enyina/moatt","portfolio":"enyina/newPortfolio",
+                              "gaming":"enyina/unverified-game"})
+        finally:
+            if old_input is None:
+                globals_.pop("input",None)
+            else:
+                globals_["input"]=old_input
+            globals_["command"]=old_command
+        self.assertEqual(len(calls),1)
+        self.assertEqual(calls[0][0:3],["git","clone","--quiet"])
+        self.assertEqual(calls[0][3],"https://github.com/enyina/newPortfolio.git")
+        self.assertNotIn("unverified-game",str(calls))
+
     def test_one_command_default_is_preview_without_terminal_confirmation(self):
         (self.personal/"AGENTS.md").write_text("# My project rules\n")
         r=self.call()
