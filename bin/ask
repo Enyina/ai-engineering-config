@@ -1,0 +1,161 @@
+#!/usr/bin/env python3
+"""Ask in everyday language. No project IDs, policy flags or JSON required.
+
+From an authorized personal project's terminal:
+  python3 /path/to/ai-engineering-config/bin/ask "improve the garment editor"
+
+From any directory, for GENERAL, non-confidential employer advice:
+  python3 /path/to/ai-engineering-config/bin/ask --work "safer retries"
+"""
+import argparse
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT=Path(__file__).resolve().parents[1]
+ADVISOR=ROOT/"bin"/"ai-intelligence"
+POLICY=ROOT/"policies"/"personal"/"policy.json"
+DESIGN=("design","layout","look","looks","style","styling","ux","ui","screen",
+        "dashboard","page","website","color","colour","typography","navigation",
+        "form","buttons","visual","interface","mockup","mannequin","responsive")
+ENGINEERING=("code","coding","backend","retry","retries","webhook","database",
+             "api","bug","crash","latency","test","testing","performance","cache",
+             "typescript","react","payment","security","server","architecture",
+             "integration","migration","fix","reliability","error","refactor")
+
+class UsageError(Exception):
+    pass
+
+def check(condition,message):
+    if not condition:
+        raise UsageError(message)
+
+def run(argv,cwd=None):
+    try:
+        return subprocess.run(argv,capture_output=True,text=True,cwd=cwd,timeout=20)
+    except (OSError,subprocess.TimeoutExpired) as exc:
+        raise UsageError("Cannot inspect this workspace with Git") from exc
+
+def project_context(start):
+    root_result=run(["git","-C",str(start),"rev-parse","--show-toplevel"])
+    check(root_result.returncode==0,"This folder isn't a recognized personal project. Open a project first, or use --work for general advice.")
+    workspace=Path(root_result.stdout.strip()).resolve()
+    check(workspace.is_dir() and not workspace.is_symlink(),"Unsafe project path")
+    rule_dir=workspace/".ai-rules"
+    check(not rule_dir.is_symlink(),"Unsafe project rules folder")
+    paths=(rule_dir/"workspace.json",rule_dir/"workspace.local.json")
+    exists=[p for p in paths if p.exists() or p.is_symlink()]
+    check(len(exists)==1,
+          "This project has no single verified owner marker. Update the correct project checkout; don't guess employer ownership.")
+    marker=exists[0]
+    check(marker.is_file() and not marker.is_symlink() and marker.stat().st_size<=8192,
+          "Unsafe project ownership marker")
+    try:
+        meta=json.loads(marker.read_text(encoding="utf-8"))
+    except (OSError,UnicodeError,ValueError) as exc:
+        raise UsageError("Invalid project ownership marker") from exc
+    check(isinstance(meta,dict) and meta.get("schema_version")==1,
+          "Unsupported ownership marker")
+    if meta.get("trust_domain")=="employer" and meta.get("policy_owner")=="organization":
+        return {"kind":"employer","workspace":workspace}
+    check(meta.get("trust_domain")=="personal" and meta.get("policy_owner")=="personal",
+          "Project owner is ambiguous; no personal rules will be applied")
+    remote=run(["git","-C",str(workspace),"remote","get-url","origin"])
+    check(remote.returncode==0,
+          "This project's GitHub connection is missing. Verify the original project before attaching a remote.")
+    value=remote.stdout.strip().rstrip("/")
+    if value.endswith(".git"):
+        value=value[:-4]
+    match=re.fullmatch(r"(?:https://github\.com/|git@github\.com:)([a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+)",value)
+    check(bool(match),"Unrecognized GitHub origin; no project rules selected")
+    known=json.loads(POLICY.read_text(encoding="utf-8"))
+    possible=[(key,entry) for key,entry in known["projects"].items()
+              if entry["repository"].lower()==match.group(1).lower()]
+    check(len(possible)==1,
+          "This personal repository isn't registered yet. Add it to the approved personal registry before selecting rules.")
+    return {"kind":"personal","workspace":workspace,"project":possible[0][0]}
+
+def domain_from_request(task,force_design=False,force_code=False):
+    if force_design:
+        return "design"
+    if force_code:
+        return "engineering"
+    words=set(re.findall(r"[a-z0-9]+",task.lower()))
+    ds=sum(word in words for word in DESIGN)
+    es=sum(word in words for word in ENGINEERING)
+    if ds>es:
+        return "design"
+    if es>ds:
+        return "engineering"
+    # Tie: layout/UI wins when explicitly requested; technical verbs otherwise.
+    return "design" if words.intersection({"layout","interface","dashboard","screen","ui","ux","design"}) else "engineering"
+
+def format_result(data, work):
+    name="Workplace advice" if work else "Personal project advice"
+    lines=[name,"="*len(name)]
+    if work:
+        lines+=["These are outside suggestions, NOT employer rules.",
+                "Sources are named so you can check them before choosing.",""]
+    else:
+        lines+=["Rules selected for: "+str(data["project"]),""]
+    if not data.get("matches"):
+        return "\n".join(lines+["I don't have a researched option for this yet.",
+                                 "Research relevant evidence first; don't invent a rule."])
+    # Most relevant group only by default: short and useful, not a wall of JSON.
+    group=data["matches"][0]
+    lines+=["What to consider: "+group["problem"],""]
+    for index,option in enumerate(group["alternatives"][:3],start=1):
+        lines+=[str(index)+". "+option["label"],
+                "   Good for: "+option["benefit"],
+                "   Watch out: "+option["tradeoff"],
+                "   Check: "+option["verify"],""]
+    lines+=["Research to check:"]
+    lines += ["- "+x["publisher"]+": "+x["url"] for x in group["evidence"][:3]]
+    if work:
+        lines+=["","General personal guidance is available as suggestions, not workplace policy."]
+        for g in data.get("candidate_personal_guidance",[])[:3]:
+            lines+=["- "+g["id"]+" (personal guidance; review only): "+g["source"]["url"]]
+        lines+=["","Check your employer's actual requirements before applying any approach."]
+    else:
+        lines+=["","Nothing was changed. Ask your agent to assess the options against your project before implementing."]
+    return "\n".join(lines)
+
+def main():
+    parser=argparse.ArgumentParser(description="Get easy design or coding advice without long commands.")
+    parser.add_argument("question",nargs="+",help="Describe what you want improved in ordinary language")
+    parser.add_argument("--work",action="store_true",
+                        help="Public/general suggestions only; do not include confidential workplace details")
+    parser.add_argument("--design",action="store_true")
+    parser.add_argument("--code",action="store_true")
+    parser.add_argument("--here",type=Path,default=Path.cwd(),
+                        help="Optional local project path (default: current folder)")
+    args=parser.parse_args()
+    try:
+        check(not(args.design and args.code),"Choose either --design or --code, not both")
+        task=" ".join(args.question).strip()
+        check(2<=len(task)<=700,"Please describe the task in a short sentence")
+        domain=domain_from_request(task,args.design,args.code)
+        if args.work:
+            context={"kind":"employer"}
+        else:
+            context=project_context(args.here)
+        command=[sys.executable,str(ADVISOR),"suggest","--domain",domain,"--task",task]
+        if context["kind"]=="employer":
+            command+=["--advisory-for-employer"]
+        else:
+            command+=["--workspace",str(context["workspace"]),
+                      "--project",context["project"]]
+        result=run(command)
+        check(result.returncode==0,
+              "Advice couldn't be prepared for this project. Check its GitHub connection and ownership marker.")
+        data=json.loads(result.stdout)
+        print(format_result(data,context["kind"]=="employer"))
+        return 0
+    except (UsageError,OSError,ValueError,KeyError,UnicodeError) as exc:
+        print("Couldn't prepare advice: "+str(exc),file=sys.stderr)
+        return 2
+
+if __name__=="__main__":
+    sys.exit(main())

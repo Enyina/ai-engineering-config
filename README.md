@@ -2,6 +2,12 @@
 
 Canonical personal engineering rules: [AGENTS.md](AGENTS.md). **Reverse Engineering First** is the default for significant projects.
 
+## Easy everyday use
+
+Open your project in your AI coding assistant and describe the change in ordinary words. The existing project instructions provide the relevant context. For bigger design or engineering decisions, the assistant can compare approaches and cite public sources. No project IDs or command flags are needed from you.
+
+A compact optional command-line helper is available in [Easy Use](docs/EASY-USE.md). Central library access depends on what your AI tool can actually open.
+
 ## Personal design + engineering intelligence
 
 The private personal config now includes a sourced [design and engineering knowledge system](docs/PERSONAL-INTELLIGENCE.md): [public source catalog](knowledge/sources/catalog.json), [comparison patterns](knowledge/patterns/catalog.json), an evidence-linked [rule map](knowledge/rule-evidence.json), a deterministic `bin/ai-intelligence` advisor, scoped research skills and a **twice-daily, review-only** source-update check (approximately 08:00 and 20:00 Lagos time). It does not copy employers' rules or automatically promote research into policies.

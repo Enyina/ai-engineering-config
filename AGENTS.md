@@ -1,6 +1,10 @@
 # Global Engineering Instructions
 Source: this repository. Scope: personal projects only; company-owned repositories follow their own approved policies. This repository is NOT an employer policy source.
 
+## Everyday requests
+
+The preferred user experience is natural language: describe the desired improvement, and the assistant identifies the relevant project guidance. For substantial decisions, the assistant should assess current project behavior and credible public references, explain a practical recommendation and meaningful alternatives, and name the sources used. When the central personal library is genuinely accessible, the local `bin/ask` tool offers a concise interface; otherwise rely on authorized existing instructions and sources. Distinguish employer-owned policy from outside guidance, and never describe an unavailable private library as already consulted.
+
 ## Reverse Engineering First
 For significant engineering/product work: define the outcome; inspect existing code and proven references; establish evidence; compare trade-offs; adapt an original solution; test against outcomes; record lessons. Investigate proportionately: a trivial fix does not require three competitor studies. Never bypass DRM, anti-cheat, credentials or licensing; do not copy proprietary code/assets.
 
