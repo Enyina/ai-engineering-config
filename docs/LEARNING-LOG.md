@@ -72,3 +72,15 @@ Status: validated by Moatt GitHub Actions
 Observed: Moatt's static Next.js bundle built successfully with pinned CC0 mannequin, but GitHub Pages could not be enabled by the workflow token (Resource not accessible by integration).
 Rule: Report validated build artifacts separately from live deployment. If host/account authorization blocks publication, preserve release artifact, document the precise required permission and do not invent a public URL or claim the site was deployed.
 Verification: Static site archive produced by Moatt deployment workflow, while configure-pages failed with explicit permission denial.
+
+
+## 2026-10-17 — Verify real career evidence before portfolio redesign
+Scope: personal / web-product / portfolio
+Status: **proposed for review**, not an active rule
+Observed: A visually polished career portfolio differed from the latest identified résumé, gave equal attention to older demo apps and newer production work, and used a Figma example containing unsupported employer/impact claims. Displayed sections were hard-coded rather than governed by section settings.
+Risk: Misleading or diluted professional credibility, duplicated effort, invisible portfolio settings, and publishing sensitive employer-owned details.
+Candidate practice: Compare latest résumé, evidence-approved career claims, live code and demonstrations; make a claim-to-source record; score 3–5 relevant proof-led projects; show an explicit KEEP/DEEPEN/COMBINE/HIDE proposal and obtain owner approval **before** changing any published project; enforce public-only draft exclusion and verify actual rendered navigation, résumé links and production publication.
+Tradeoffs: A smaller curated portfolio is easier to assess but can omit breadth; keep archives accessible where useful.
+Evidence: `Enyina/newPortfolio` on 2026-10-17; the owner's 2026-10-05 CV (not copied here); https://docs.github.com/en/account-and-profile/tutorials/using-your-github-profile-to-enhance-your-resume.
+Detailed candidate and verification: [portfolio-evidence-review-2026-10-17.md](../learning/portfolio-evidence-review-2026-10-17.md).
+Promotion: Requires owner review, a checked source ledger, tests and actual visitor journey observations. No company data or private code should be transferred into this repository.
