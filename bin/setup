@@ -208,13 +208,8 @@ def plan_project(project, previous):
         old = read_existing(target)
         receipt = previous.get(str(target))
         if receipt:
-            # Managed blocks preserve human edits outside the managed span.
-            if rel == CURSOR and old is not None:
-                require(digest(old) == receipt["installed_sha256"],
-                        "Cursor instruction was edited since setup")
-            if rel == "CLAUDE.md" and old is not None and receipt["original_sha256"] is None:
-                require(digest(old) == receipt["installed_sha256"],
-                        "New Claude guidance was changed after setup")
+            require(old is not None and digest(old) == receipt["installed_sha256"],
+                    "A managed instruction file changed since setup; review changes before refreshing")
         if old != new:
             actions.append({"path":target,"relative":rel,"before":old,"after":new,
                             "project":project["name"]})
@@ -264,15 +259,22 @@ def apply_actions(actions, folder, prior):
     stamp = str(time.time_ns())
     for i, act in enumerate(actions):
         before = act["before"]
-        backup_path = None
-        if before is not None:
-            backup = backups / (stamp + "-" + str(i) + ".bak")
-            require(not backup.exists(), "Backup name collision")
-            write_atomic(backup, before)
-            backup_path = str(backup)
+        earlier = prior["files"].get(str(act["path"]))
+        if earlier:
+            # Never replace the original restore point during a future update.
+            backup_path = earlier["backup"]
+            original_hash = earlier["original_sha256"]
+        else:
+            backup_path = None
+            original_hash = digest(before) if before is not None else None
+            if before is not None:
+                backup = backups / (stamp + "-" + str(i) + ".bak")
+                require(not backup.exists(), "Backup name collision")
+                write_atomic(backup, before)
+                backup_path = str(backup)
         updates[str(act["path"])] = {
             "project":act["project"],
-            "original_sha256":digest(before) if before is not None else None,
+            "original_sha256":original_hash,
             "installed_sha256":digest(act["after"]),
             "backup":backup_path
         }
