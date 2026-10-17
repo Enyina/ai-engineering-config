@@ -77,6 +77,46 @@
       "id": "delivery.release-notes",
       "kind": "required",
       "text": "For every meaningful delivered change, write or update the project's human-facing release notes. Write for people who do not work in software: short everyday English, explain what changed and why it matters, say if anything is still unavailable, and avoid code jargon, internal file names, technical command names and unexplained abbreviations. Keep technical test and implementation details in a separate engineering report, not the release notes."
+    },
+    {
+      "id": "research.options",
+      "kind": "guidance",
+      "text": "For significant design or architecture choices, inspect the existing product and credible references; present genuinely different options, their tradeoffs, and ways to test them. Do not force three alternatives for trivial changes or treat a popular design system as a universal style."
+    },
+    {
+      "id": "design.clarity",
+      "kind": "guidance",
+      "text": "Start with the audience, their actual task and understandable content hierarchy. Communicate status, recovery and next steps without forcing users to remember hidden instructions."
+    },
+    {
+      "id": "design.accessibility",
+      "kind": "required",
+      "text": "For interfaces, include keyboard and focus behavior, text alternatives, readable contrast, responsive and touch interactions, and task-appropriate WCAG 2.2 checks. Test rather than merely claiming compliance."
+    },
+    {
+      "id": "design.consistency",
+      "kind": "guidance",
+      "text": "Reuse the current product's tokens, typography and interaction conventions unless evidence supports changing them. Favor a coherent identity over blindly copying a reference brand."
+    },
+    {
+      "id": "design.evaluation",
+      "kind": "guidance",
+      "text": "Evaluate alternatives using user task completion, understandable errors, time and effort, accessibility and representative screenshots. A beautiful screenshot alone is not a validated interaction."
+    },
+    {
+      "id": "engineering.source-evidence",
+      "kind": "guidance",
+      "text": "Prefer official framework and platform documentation, current security standards and real repository behavior over generic online claims. Record publication/version context and verify relevant examples against this codebase."
+    },
+    {
+      "id": "engineering.boundaries",
+      "kind": "guidance",
+      "text": "Find the authoritative state, permissions, input boundaries and irreversible side effects before changing architecture. Prefer the simplest solution that survives failure and preserves contracts."
+    },
+    {
+      "id": "engineering.verification",
+      "kind": "guidance",
+      "text": "Choose checks proportional to impact: focused tests for isolated changes, integration tests for shared contracts, and complete user journeys for important releases. Report actual evidence and unresolved gaps."
     }
   ],
   "global": {
@@ -88,7 +128,9 @@
       "quality.regressions",
       "research.reverse-first",
       "delivery.commit",
-      "delivery.release-notes"
+      "delivery.release-notes",
+      "research.options",
+      "engineering.source-evidence"
     ],
     "preferences": {
       "change_scope": "Small reversible changes; review adjacent contracts."
@@ -105,7 +147,12 @@
   "categories": {
     "web-product": {
       "rules": [
-        "web.product"
+        "web.product",
+        "design.clarity",
+        "design.accessibility",
+        "design.consistency",
+        "design.evaluation",
+        "engineering.verification"
       ],
       "preferences": {
         "test_focus": "Responsive, accessibility and browser flows."
@@ -114,7 +161,8 @@
     "three-d-editor": {
       "rules": [
         "editor.pointer",
-        "editor.claims"
+        "editor.claims",
+        "design.evaluation"
       ],
       "preferences": {}
     },
@@ -125,6 +173,24 @@
       ],
       "preferences": {
         "test_focus": "Fixed-step simulation, controller and performance."
+      }
+    },
+    "backend-reliability": {
+      "rules": [
+        "engineering.boundaries",
+        "engineering.verification"
+      ],
+      "preferences": {
+        "research_emphasis": "Official API, failure recovery, security and integration evidence."
+      }
+    },
+    "frontend": {
+      "rules": [
+        "design.accessibility",
+        "engineering.verification"
+      ],
+      "preferences": {
+        "research_emphasis": "Platform behavior, framework references and user-journey evidence."
       }
     }
   },
