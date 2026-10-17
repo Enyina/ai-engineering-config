@@ -7,3 +7,7 @@
 We've improved the shared guidance for personal projects. From now on, completed changes should be saved with a clear description, and updates should explain the difference they make in everyday language.
 
 These instructions have been saved for future use. They have not changed the tools already installed on your computer.
+
+**Older guidance now matches**
+
+We have also updated older written instructions so they no longer give mixed advice about saving completed work. Future updates should explain changes in the same simple way.
