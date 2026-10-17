@@ -105,6 +105,20 @@ class IntelligenceTests(unittest.TestCase):
         self.assertEqual(data["matches"],[])
         self.assertFalse(data["changes_applied"])
 
+    def test_unverified_website_is_not_automatically_trusted(self):
+        import importlib.util
+        spec=importlib.util.spec_from_file_location(
+            "learning_router", str(ROOT/"learning/router.py"))
+        module=importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        unverified=module.route("https://example.org/unknown")
+        self.assertEqual(unverified["status"],"capability_gap")
+        verified=module.route("https://example.org/unknown",
+                              explicit_type="verified_design_source")
+        self.assertEqual(verified["status"],"matched")
+        self.assertIn("source-to-design-insight",verified["pipelines"])
+        self.assertEqual(verified["execution"],"not_started")
+
     def test_personal_rule_fallback(self):
         pack=json.loads((ROOT/"policies/personal/policy.json").read_text())
         for id in ("moatt","portfolio","gaming"):
