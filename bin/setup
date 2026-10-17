@@ -1,0 +1,382 @@
+#!/usr/bin/env python3
+"""One-time, local-only personal project setup; Python 3.9+, no extra packages.
+
+  python3 bin/setup                  # inspect, offer to clone, preview and confirm
+  python3 bin/setup --apply          # noninteractive setup of verified local projects
+  python3 bin/setup --check          # check managed instructions and tool discovery
+  python3 bin/setup --rollback       # restore only unchanged, tracked installed files
+
+Does NOT edit globally active agent settings, permissions, shell configuration,
+employer repositories, or existing instructions outside labeled managed sections.
+"""
+import argparse
+import hashlib
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+BEGIN = "<!-- ai-engineering-setup:begin -->"
+END = "<!-- ai-engineering-setup:end -->"
+CURSOR = ".cursor/rules/ai-engineering-setup.mdc"
+STATE_NAME = "setup-state.json"
+GIT_URL = re.compile(r"^(?:https://github\.com/|git@github\.com:)([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?/?$")
+KNOWN_CLONES = {"moatt", "portfolio"}
+SKIP_DIRS = {".git", "node_modules", "vendor", ".venv", "dist", "build", ".next"}
+
+class SetupError(Exception):
+    pass
+
+def require(value, message):
+    if not value:
+        raise SetupError(message)
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+def command(argv, timeout=15):
+    try:
+        return subprocess.run(argv, capture_output=True, text=True,
+                              check=False, timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise SetupError("Git or Python cannot inspect this project") from exc
+
+def verified_origin(workspace):
+    result = command(["git", "-C", str(workspace), "remote", "get-url", "origin"])
+    if result.returncode != 0:
+        return None
+    match = GIT_URL.fullmatch(result.stdout.strip())
+    return match.group(1).lower() if match else None
+
+def trusted_marker(workspace):
+    folder = workspace / ".ai-rules"
+    require(not folder.is_symlink(), "Unsafe personal project marker directory")
+    markers = [p for p in (folder / "workspace.json", folder / "workspace.local.json")
+               if p.exists() or p.is_symlink()]
+    if len(markers) != 1:
+        return False
+    path = markers[0]
+    require(path.is_file() and not path.is_symlink() and path.stat().st_size <= 8192,
+            "Unsafe personal project marker")
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, UnicodeError):
+        return False
+    return data == {"schema_version": 1, "trust_domain": "personal", "policy_owner": "personal"}
+
+def registry():
+    path = ROOT / "policies" / "personal" / "policy.json"
+    require(not path.is_symlink() and path.is_file(), "Missing personal rule registry")
+    pack = json.loads(path.read_text(encoding="utf-8"))
+    require(pack.get("owner") == "personal" and pack.get("trust_domain") == "personal",
+            "Only verified personal policy packs are supported")
+    return {name: item["repository"].lower() for name, item in pack["projects"].items()}
+
+def project_candidates(roots, supplied):
+    seen, results = set(), []
+    for path in supplied:
+        p = Path(path).expanduser()
+        if p.exists():
+            results.append(p)
+    for root in roots:
+        r = Path(root).expanduser()
+        if not r.is_dir() or r.is_symlink():
+            continue
+        # One directory level, not arbitrary recursive scans of work/employer trees.
+        for p in sorted(r.iterdir()):
+            if p.name.startswith(".") or p.name in SKIP_DIRS or p.is_symlink():
+                continue
+            if p.is_dir():
+                results.append(p)
+    for p in results:
+        try:
+            resolved = p.resolve(strict=True)
+        except OSError:
+            continue
+        if resolved not in seen:
+            seen.add(resolved)
+            yield resolved
+
+def project_context(path, mapped):
+    require(path.is_dir() and not path.is_symlink(), "Invalid project folder")
+    origin = verified_origin(path)
+    if origin is None or origin not in mapped.values():
+        return None
+    if not trusted_marker(path):
+        return None
+    project = next(name for name, value in mapped.items() if value == origin)
+    # Enforce the actual hierarchical resolver as an authorization gate.
+    check = command([sys.executable, str(ROOT / "bin" / "ai-rules"), "resolve",
+                     "--workspace", str(path), "--project", project])
+    require(check.returncode == 0, "Personal rule selection refused for " + project)
+    result = json.loads(check.stdout)
+    require(result.get("trust_domain") == "personal" and result.get("project") == project,
+            "Wrong rule trust domain")
+    return {"name": project, "root": path, "rules": result}
+
+def agents_available(home):
+    apps = {
+        "Codex": bool(shutil.which("codex") or (home / ".codex").exists() or Path("/Applications/Codex.app").exists()),
+        "Claude Code": bool(shutil.which("claude") or (home / ".claude").exists() or Path("/Applications/Claude.app").exists()),
+        "Cursor": bool(shutil.which("cursor") or Path("/Applications/Cursor.app").exists()),
+        "Antigravity": bool(shutil.which("antigravity") or Path("/Applications/Antigravity.app").exists())
+    }
+    return apps
+
+def instructions(result):
+    # The project-specific AGENTS guidance stays above this managed block.
+    lines = ["### Approved shared personal guidance",
+             "These are selected for this verified personal project only. "
+             "The project's existing specific instructions take priority for preferences; "
+             "do not weaken security or authorization requirements.",
+             "When relevant, compare credible public design/engineering sources and offer "
+             "clear options. Do not claim access to a private repository unless actually available.",
+             "",
+             "#### Required safeguards"]
+    lines += ["- " + item["text"] for item in result["required"]]
+    lines += ["", "#### Relevant engineering and design guidance"]
+    lines += ["- " + item["text"] for item in result["guidance"]]
+    lines += ["", "#### Selected preferences"]
+    for key, val in sorted(result["preferences"].items()):
+        lines.append("- " + key.replace("_", " ") + ": " + val["value"])
+    lines += ["", "These instructions do not grant command approvals or change employer policy."]
+    return "\n".join(lines) + "\n"
+
+def add_block(current, section):
+    require(current.count(BEGIN) == current.count(END), "Partly edited managed instruction block")
+    require(current.count(BEGIN) <= 1 and current.count(END) <= 1,
+            "Duplicate managed instruction blocks")
+    block = BEGIN + "\n" + section + END
+    if BEGIN in current:
+        start = current.index(BEGIN)
+        finish = current.index(END) + len(END)
+        require(start < finish, "Invalid managed block order")
+        return current[:start] + block + current[finish:]
+    return current.rstrip("\n") + ("\n\n" if current else "") + block + "\n"
+
+def safe_path(root, relative):
+    target = root
+    for part in Path(relative).parts:
+        require(part not in (".", ".."), "Unsafe output path")
+        target = target / part
+        require(not target.is_symlink(), "Symlinked instruction path refused")
+    require(root.resolve() in target.resolve().parents, "Instruction path escapes project")
+    return target
+
+def read_existing(target):
+    if target.exists():
+        require(target.is_file() and not target.is_symlink() and
+                target.stat().st_size < 256000, "Unsafe existing instruction file")
+        return target.read_bytes()
+    return None
+
+def plan_project(project, previous):
+    root, policy = project["root"], project["rules"]
+    context = instructions(policy)
+    outputs = {}
+    agent = safe_path(root, "AGENTS.md")
+    old = read_existing(agent)
+    outputs["AGENTS.md"] = add_block(old.decode("utf-8") if old is not None else
+                                      "# Personal project guidance\n", context).encode("utf-8")
+    claude = safe_path(root, "CLAUDE.md")
+    old = read_existing(claude)
+    if old is None:
+        outputs["CLAUDE.md"] = ("# Project guidance\n\n@AGENTS.md\n").encode("utf-8")
+    elif "@AGENTS.md" not in old.decode("utf-8"):
+        outputs["CLAUDE.md"] = add_block(old.decode("utf-8"),
+                                          "Claude Code: read and follow the root AGENTS.md project rules.\n"
+                                          "@AGENTS.md\n").encode("utf-8")
+    cursor = safe_path(root, CURSOR)
+    existing = read_existing(cursor)
+    content = ("---\ndescription: Scoped personal engineering and design guidance\n"
+               "alwaysApply: true\n---\n\n"
+               "Follow the root AGENTS.md project rules. These are active only for this "
+               "verified personal repository. Do not apply them in employer projects.\n").encode("utf-8")
+    if existing is not None:
+        receipt = previous.get(str(cursor), {})
+        require(receipt.get("installed_sha256") == digest(existing),
+                "Existing unmanaged Cursor instruction file: review manually")
+    outputs[CURSOR] = content
+    actions = []
+    for rel, new in outputs.items():
+        target = safe_path(root, rel)
+        old = read_existing(target)
+        receipt = previous.get(str(target))
+        if receipt:
+            # Managed blocks preserve human edits outside the managed span.
+            if rel == CURSOR and old is not None:
+                require(digest(old) == receipt["installed_sha256"],
+                        "Cursor instruction was edited since setup")
+            if rel == "CLAUDE.md" and old is not None and receipt["original_sha256"] is None:
+                require(digest(old) == receipt["installed_sha256"],
+                        "New Claude guidance was changed after setup")
+        if old != new:
+            actions.append({"path":target,"relative":rel,"before":old,"after":new,
+                            "project":project["name"]})
+    return actions
+
+def state_dir(path):
+    target = Path(path).expanduser()
+    require(not target.is_symlink(), "Unsafe setup storage")
+    return target
+
+def load_state(folder):
+    target = folder / STATE_NAME
+    if not target.exists():
+        return {"schema_version":1,"files":{}}
+    require(target.is_file() and not target.is_symlink() and target.stat().st_size < 300000,
+            "Invalid setup record")
+    data = json.loads(target.read_text(encoding="utf-8"))
+    require(data.get("schema_version") == 1 and isinstance(data.get("files"), dict),
+            "Incompatible setup record")
+    return data
+
+def write_atomic(path, data):
+    require(not path.is_symlink(), "Symlink destination refused")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp = path.with_name(path.name + ".ai-setup-temp")
+    require(not temp.exists() and not temp.is_symlink(), "Temporary path collision")
+    try:
+        with temp.open("xb") as handle:
+            handle.write(data)
+        os.replace(temp, path)
+    finally:
+        if temp.exists():
+            temp.unlink()
+
+def apply_actions(actions, folder, prior):
+    if not actions:
+        return
+    require(not folder.exists() or (folder.is_dir() and not folder.is_symlink()),
+            "Unsafe local setup directory")
+    backups = folder / "backups"
+    require(not backups.is_symlink(), "Unsafe backup directory")
+    # Preflight all destinations and recheck contents before writing.
+    for act in actions:
+        require(read_existing(act["path"]) == act["before"],
+                "Project files changed since preview; retry")
+    updates = dict(prior["files"])
+    stamp = str(time.time_ns())
+    for i, act in enumerate(actions):
+        before = act["before"]
+        backup_path = None
+        if before is not None:
+            backup = backups / (stamp + "-" + str(i) + ".bak")
+            require(not backup.exists(), "Backup name collision")
+            write_atomic(backup, before)
+            backup_path = str(backup)
+        updates[str(act["path"])] = {
+            "project":act["project"],
+            "original_sha256":digest(before) if before is not None else None,
+            "installed_sha256":digest(act["after"]),
+            "backup":backup_path
+        }
+    for act in actions:
+        write_atomic(act["path"],act["after"])
+    write_atomic(folder / STATE_NAME,
+                 (json.dumps({"schema_version":1,"files":updates},sort_keys=True,indent=2)+"\n").encode("utf-8"))
+
+def rollback(folder):
+    manifest=load_state(folder)
+    actions=[]
+    for name, info in manifest["files"].items():
+        target=Path(name)
+        require(not target.is_symlink(), "Unsafe installed file during rollback")
+        current=read_existing(target)
+        if current is None or digest(current)!=info["installed_sha256"]:
+            raise SetupError("A managed file has changed since setup; no automatic rollback")
+        original=None
+        if info["backup"]:
+            backup=Path(info["backup"])
+            require(backup.is_file() and not backup.is_symlink(),
+                    "Missing or unsafe local backup")
+            original=backup.read_bytes()
+            require(digest(original)==info["original_sha256"],
+                    "Backup content does not match its record")
+        actions.append((target,original))
+    for target,original in actions:
+        if original is None:
+            target.unlink()
+        else:
+            write_atomic(target,original)
+    write_atomic(folder / STATE_NAME,
+                 b'{\n  "schema_version": 1,\n  "files": {}\n}\n')
+    print("Restored the recorded pre-setup files. No employer settings or command approvals changed.")
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--apply",action="store_true",help="Apply project-scoped instructions without prompting")
+    parser.add_argument("--check",action="store_true",help="Check installed guidance without writing")
+    parser.add_argument("--rollback",action="store_true",help="Restore only verified setup-managed files")
+    parser.add_argument("--projects-root",action="append",type=Path,default=[],
+                        help="Folder containing your personal projects; repeat as needed")
+    parser.add_argument("--project",action="append",type=Path,default=[],
+                        help="Explicit personal project checkout")
+    parser.add_argument("--state-dir",type=Path,help="Local setup record and backups")
+    args=parser.parse_args()
+    try:
+        require(sum(bool(x) for x in (args.apply,args.check,args.rollback))<=1,
+                "Use only one mode")
+        folder=state_dir(args.state_dir or Path.home()/".config"/"ai-engineering")
+        if args.rollback:
+            rollback(folder)
+            return 0
+        known=registry()
+        home=Path.home()
+        print("AI Engineering — one-time personal setup")
+        print("Supported coding assistants:")
+        for name,available in agents_available(home).items():
+            print("  "+name+": "+("found" if available else "not detected (still supported)"))
+        roots=args.projects_root or [ROOT.parent]
+        candidates=list(project_candidates(roots,args.project))
+        verified=[]
+        for candidate in candidates:
+            try:
+                item=project_context(candidate,known)
+                if item:
+                    verified.append(item)
+            except (SetupError,ValueError,UnicodeError):
+                # Unknown/unverified local repositories get no personal rules.
+                continue
+        print("Verified personal projects:",len(verified))
+        state=load_state(folder)
+        actions=[]
+        for item in verified:
+            print("  "+item["name"]+" — "+str(item["root"]))
+            actions.extend(plan_project(item,state["files"]))
+        print("Proposed changes:",len(actions))
+        for action in actions:
+            print("  "+action["project"]+": "+action["relative"]+
+                  (" (new)" if action["before"] is None else " (preserve original + add/update managed guidance)"))
+        if not verified:
+            print("No verified personal projects found. Clone a personal project next to this repository and run setup again.")
+        if args.check:
+            print("Status:", "up to date" if not actions else "needs setup / managed rule refresh")
+            return 0 if not actions else 1
+        if not actions:
+            print("Already set up. No changes made.")
+            return 0
+        if not args.apply:
+            if not sys.stdin.isatty():
+                print("Preview only. To install these changes run: python3 bin/setup --apply")
+                return 0
+            answer=input("Install scoped guidance for these verified personal projects? [y/N] ").strip().lower()
+            if answer not in {"y","yes"}:
+                print("No changes made.")
+                return 0
+        apply_actions(actions,folder,state)
+        print("Installed scoped instructions. Open any verified project in your AI coding assistant and ask normally.")
+        print("Original files were backed up locally. Run python3 bin/setup --check to recheck.")
+        print("Actual agent loading requires a quick check inside each installed app.")
+        return 0
+    except (SetupError,OSError,UnicodeError,ValueError,KeyError) as exc:
+        print("Setup refused: "+str(exc),file=sys.stderr)
+        return 2
+
+if __name__=="__main__":
+    sys.exit(main())
