@@ -24,3 +24,15 @@ Personal projects can now compare different approaches instead of following one 
 We've also added a library of trusted public references and a regular check for possible changes. New findings will be reviewed before becoming permanent guidance.
 
 These improvements are saved in the shared personal guidance. They do not automatically redesign your projects or change your computer's settings.
+
+
+## October 17, 2026 — Portfolio review lessons
+
+**Clearer evidence before showcasing work**
+
+We've recorded a new review method for checking personal websites against actual career history. It helps distinguish finished work from prototypes and highlights where claims need proof.
+
+**Your approval stays central**
+
+Suggested changes to showcased projects must be explained before anything is hidden, replaced, or rewritten. The new method is waiting for review and has not changed the public website.
+
