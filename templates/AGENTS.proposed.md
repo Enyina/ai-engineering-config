@@ -9,7 +9,8 @@ Solve the actual user problem with a focused, maintainable change. Review nearby
 - Preserve existing behavior and contracts unless the task explicitly requires a change.
 - Prefer small diffs; avoid unrelated formatting, refactors, renames and new dependencies.
 - When the task is complex or risky, briefly state the approach, assumptions and failure modes before implementation. Do not impose a six-step written ritual for trivial work.
-- Do not commit, push, deploy, migrate production data or perform irreversible actions without the appropriate authorization.
+- For every completed authorized change, create a focused commit and clearly report what it contains. Preserve project and employer-specific approval restrictions. Do not push, deploy, migrate production data, or perform irreversible actions without separate appropriate authorization.
+- When a meaningful change is delivered, update the reader-facing RELEASE_NOTES.md (or its approved equivalent) in plain everyday English, explaining the change, why it matters, and what remains unavailable. Keep implementation details in a separate technical report.
 
 ## Code quality
 - For TypeScript, use meaningful types, narrow error handling and runtime validation at trust boundaries. Avoid `any` and unsafe assertions.
