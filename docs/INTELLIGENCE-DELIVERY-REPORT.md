@@ -30,9 +30,9 @@ These are working reference, recommendation and review tools, **not an autonomou
 | Automated tests | [Latest verified branch run](https://github.com/Enyina/ai-engineering-config/actions/runs/39049797169): **78 tests passed** |
 | Central merge | [PR #16](https://github.com/Enyina/ai-engineering-config/pull/16) merged as `4861117909936caa1fcbfa2bf78309fb8c677e7b`, preserving concurrent `web.design-evidence` work |
 | Portfolio adoption | [PR #4](https://github.com/Enyina/newPortfolio/pull/4) merged after passing project checks; no product code changed |
-| Moatt adoption | [PR #3](https://github.com/Enyina/moatt/pull/3) pending its browser CI at initial report write time; no product code changed |
+| Moatt adoption | [PR #3](https://github.com/Enyina/moatt/pull/3) merged as `c8875f8` after [CI](https://github.com/Enyina/moatt/actions/runs/39050026501) passed assets, type checks, tests, build, static release checks and browser journeys; no product code changed |
 
-## Why sources aren't automatically binding
+**Verification note:** One earlier parallel Moatt CI run failed on a browser canvas-size timeout. A later full run for the same reviewed change completed successfully. This is not proof that browser timing will never be flaky.\n\n## Why sources aren't automatically binding
 
 Use W3C WCAG as a testable accessibility standard, NN/g and Baymard as research evidence, Apple/Material/Carbon/Atlassian/GOV.UK for platform and component alternatives; use OWASP/NIST and official platform/framework documentation for coding evidence. An original comparison option is **our hypothesis**, not a quotation, endorsement or proof by those publishers. Observe actual outcomes before making an implementation guideline permanent.
 
