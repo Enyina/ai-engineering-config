@@ -53,3 +53,21 @@ The user asked for an audit, stronger projects, and to be notified **before any 
 ## Rollback and privacy
 
 Only review documentation is created by this proposal. No public portfolio project, live content or production data is changed. Do not copy owner résumé or internal company code into this private learning proposal.
+
+
+## Applied portfolio trial — 2026-10-17
+
+**Approval received:** Owner explicitly authorized continuing with the five-featured/six-archived project selection and strengthening strategy. This is approval to implement in \`Enyina/newPortfolio\`; it is NOT approval to publish private employer data or to auto-promote a general personal policy.
+
+**Observed implementation**
+- Changed public data to distinguish five featured recent case studies from six archived legacy experiments, preserving direct project links.
+- Reconciled the displayed four-role timeline with the owner's Oct 5 targeted résumé; kept a ledger of evidence grades and conflicts.
+- Added evidence and limitation language to the employer, prototype and private-research cases.
+- Wired the Figma-inspired page to visible/ordered section projection instead of ignoring configuration.
+- Added a contact-safe, printable resume route; did not publish personal phone number.
+- Added tests for archive preservation, hidden and draft exclusions, resumed routes and career-data expectations.
+- GitHub Actions completed tests and a production build. **Production deployment, browser acceptance and impact analytics remain unverified.**
+
+**Reusable candidate insight:** A page that passes a build can still be misleading when the latest résumé is ignored, or ineffective when important projects are buried among demos. Separate evidence and presentation. A configuration is not implemented until the rendered interface actually uses it.
+
+**Next validation:** conduct real desktop/mobile visitor tasks and confirm the Netlify production commit. Check owner signoff for business measurements and reusable project claims before promotion beyond this portfolio. Keep this as a reviewable experiment pending those checks.
