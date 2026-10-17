@@ -2,6 +2,8 @@
 __pycache__/
 *.pyc
 .capture-*/
+# Local captures are not review-approved; never commit them by accident
+snapshot/
 snapshot.previous-*/
 *.log
 # Never include raw local reports or credentials
