@@ -10,6 +10,8 @@
 
 A successful company-specific debugging command does **not** become a portable engineering standard or an automatic global command approval. Keep those concepts separate.
 
+**Suggestion is not inheritance:** an employer project can be offered outside public-source-backed design and engineering alternatives and clearly attributed general personal guidance, without treating them as company rules. The absence of a company-specific preference does not prevent engineering judgment. Every suggestion identifies its public or personal origin and must be reconciled with the company's actual policies before adoption. This is **read-only advisory**, not a method of copying Moatt-specific rules or company information across trust domains. See [external advice](EMPLOYER-ADVISORY.md).
+
 ## Trust domains
 
 | Domain | Source of instructions | Where stored | Automatic central sync |
