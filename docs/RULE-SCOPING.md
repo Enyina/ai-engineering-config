@@ -1,4 +1,6 @@
 # Rule scoping and precedence
+
+**Trust-domain boundary comes first.** Before any category selection, classify ownership and apply [docs/TRUST-DOMAINS.md](TRUST-DOMAINS.md). An employer workspace never automatically inherits personal project/category rules. An unclassified workspace is inspect-only. This is a required gate for the future resolver, not yet an active global Codex setting.
 **No blanket inheritance across projects.** `categories/*.md` and `projects/*.md` are **reference templates**, not magically auto-loaded instructions.
 
 A personal project's `AGENTS.md` must state which selected categories apply and carry enough actual instructions locally for offline agents. Use a commit-pinned permalink to the canonical source for traceability, not a floating main-only link. For rule changes: review upstream diff, adapt locally, run project tests, then commit. Prefer a PR for important changes.
