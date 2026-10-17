@@ -1,0 +1,168 @@
+#!/usr/bin/env python3
+"""Personal-only, source-backed design and engineering recommendation engine.
+
+Read-only. Never copies employer policies, writes project files, or claims a
+reference option is already proven for a particular user journey.
+"""
+import argparse
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+from urllib.parse import urlsplit
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCES = ROOT / "knowledge" / "sources" / "catalog.json"
+PATTERNS = ROOT / "knowledge" / "patterns" / "catalog.json"
+VALID_DOMAINS = {"design", "engineering"}
+SLUG = re.compile(r"^[a-z][a-z0-9-]{1,63}$")
+
+class InputError(Exception):
+    pass
+
+def need(ok, why):
+    if not ok:
+        raise InputError(why)
+
+def data(path):
+    need(path.is_file() and not path.is_symlink() and path.stat().st_size < 300000,
+         "Missing or unsafe knowledge catalog")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+def validate():
+    catalog, library = data(SOURCES), data(PATTERNS)
+    need(catalog.get("schema_version") == 1 and catalog.get("owner") == "personal",
+         "Knowledge sources must be personal")
+    need(library.get("schema_version") == 1 and library.get("trust_domain") == "personal",
+         "Knowledge patterns must be personal")
+    sources = {}
+    for source in catalog["sources"]:
+        need(isinstance(source, dict) and SLUG.fullmatch(source.get("id", "")),
+             "Invalid source ID")
+        need(source["id"] not in sources, "Duplicate source ID")
+        url = urlsplit(source.get("url", ""))
+        need(url.scheme == "https" and bool(url.hostname) and not url.username
+             and not url.password and not url.fragment and not url.port,
+             "External sources must use public HTTPS references")
+        need(source.get("source_scope") == "public" and
+             source.get("rule_status") == "not-auto-approved",
+             "Sources may not silently become rules")
+        need(source.get("domain") in VALID_DOMAINS, "Invalid source domain")
+        need(isinstance(source.get("insight"), str) and len(source["insight"]) > 15,
+             "Source interpretation missing")
+        sources[source["id"]] = source
+    ids = set()
+    for pattern in library["patterns"]:
+        need(isinstance(pattern, dict) and SLUG.fullmatch(pattern.get("id", "")),
+             "Invalid pattern ID")
+        need(pattern["id"] not in ids and pattern.get("domain") in VALID_DOMAINS,
+             "Duplicate pattern or unknown domain")
+        ids.add(pattern["id"])
+        need(isinstance(pattern.get("tags"), list) and
+             len(pattern["tags"]) == len(set(pattern["tags"])) and
+             all(isinstance(t, str) and t for t in pattern["tags"]),
+             "Invalid pattern tags")
+        need(isinstance(pattern.get("projects"), list) and
+             all(SLUG.fullmatch(p) for p in pattern["projects"]), "Invalid project scope")
+        need(len(pattern.get("sources", [])) >= 2 and
+             all(k in sources and sources[k]["domain"] == pattern["domain"]
+                 for k in pattern["sources"]), "Missing/foreign reference")
+        options = pattern.get("options", [])
+        need(isinstance(options, list) and 2 <= len(options) <= 5,
+             "Need two to five real alternatives")
+        opts = set()
+        for option in options:
+            need(isinstance(option, dict) and SLUG.fullmatch(option.get("id", "")),
+                 "Bad alternative ID")
+            need(option["id"] not in opts, "Repeated alternative")
+            opts.add(option["id"])
+            for field in ("label", "benefit", "tradeoff", "when", "verify"):
+                need(isinstance(option.get(field), str) and option[field].strip(),
+                     "Incomplete alternative: " + field)
+    return sources, library["patterns"]
+
+def preflight(workspace, project, feature):
+    command = [sys.executable, str(ROOT / "bin" / "ai-rules"), "resolve",
+               "--workspace", str(workspace), "--project", project]
+    if feature:
+        command += ["--feature", feature]
+    check = subprocess.run(command, capture_output=True, text=True, timeout=15)
+    need(check.returncode == 0, "Personal workspace, origin or selected feature not authorized")
+    resolved = json.loads(check.stdout)
+    need(resolved["trust_domain"] == "personal" and resolved["owner"] == "personal",
+         "Employer policy cannot use personal recommendations")
+    return resolved
+
+def suggest(sources, patterns, context, domain, task, tags, limit):
+    requested = set(x.lower() for x in tags)
+    requested |= set(re.findall(r"[a-z0-9]+", task.lower()))
+    results = []
+    for pattern in patterns:
+        if pattern["domain"] != domain:
+            continue
+        if pattern["projects"] and context["project"] not in pattern["projects"]:
+            continue
+        matches = sorted(t for t in pattern["tags"] if
+                         any(t == v or t in v or v in t for v in requested if len(v) >= 3))
+        if not matches:
+            continue
+        # Domain and scope are hard filters; score only chooses relevance,
+        # not the winning design approach.
+        score = len(matches) * 10 + (4 if pattern["projects"] else 0)
+        results.append((score, pattern["id"], pattern, matches))
+    results.sort(key=lambda item: (-item[0], item[1]))
+    chosen = []
+    for score, _, p, matches in results[:limit]:
+        chosen.append({
+            "id": p["id"], "domain": domain, "category": p["category"],
+            "problem": p["problem"], "matched_tags": matches,
+            "evidence": [{"id": s, "publisher": sources[s]["publisher"],
+                          "url": sources[s]["url"], "type": sources[s]["kind"]}
+                         for s in p["sources"]],
+            "alternatives": p["options"],
+            "recommendation_status": "compare_then_validate",
+            "selection": "none_preselected"
+        })
+    return {"trust_domain":"personal","project":context["project"],
+            "feature":context.get("feature"),"domain":domain,"task":task,
+            "matches":chosen,"unmatched":not bool(chosen),
+            "advice": ("No relevant approved pattern. Propose a scoped research gap "
+                       "instead of inventing a mandatory rule.") if not chosen else
+                      "Compare alternatives against actual user and product evidence; "
+                      "do not infer that a source endorses any one implementation.",
+            "changes_applied":False}
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("command", choices=("validate", "suggest"))
+    parser.add_argument("--workspace", type=Path)
+    parser.add_argument("--project")
+    parser.add_argument("--feature")
+    parser.add_argument("--domain", choices=sorted(VALID_DOMAINS))
+    parser.add_argument("--task")
+    parser.add_argument("--tags", default="", help="Comma-separated optional topic tags")
+    parser.add_argument("--max", type=int, default=3, dest="limit")
+    args = parser.parse_args()
+    try:
+        sources, patterns = validate()
+        if args.command == "validate":
+            output = {"valid": True, "trust_domain":"personal",
+                      "sources": len(sources),"patterns":len(patterns)}
+        else:
+            need(bool(args.workspace and args.project and args.domain and args.task),
+                 "A workspace, project, domain and task are required")
+            need(1 <= args.limit <= 5 and len(args.task) <= 1000,
+                 "Invalid limit or task length")
+            context = preflight(args.workspace, args.project, args.feature)
+            output = suggest(sources, patterns, context, args.domain, args.task,
+                             [t.strip() for t in args.tags.split(",") if t.strip()], args.limit)
+        print(json.dumps(output, indent=2, ensure_ascii=False))
+    except (InputError, ValueError, OSError, KeyError, subprocess.TimeoutExpired) as exc:
+        # Intentionally omit raw task, paths, secrets or content.
+        print("Intelligence request denied: " + str(exc), file=sys.stderr)
+        return 2
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())
