@@ -161,7 +161,7 @@ def check_workspace(workspace, pack, project):
     match = re.fullmatch(r"(?:https://github\.com/|git@github\.com:)([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?/?", url)
     require(match is not None, "Unsupported GitHub origin; verify --workspace")
     require(match.group(1).lower() == project["repository"].lower(),
-            "Git origin differs from registered project; verify --workspace, not its marker")
+            "Repository mismatch: Git origin differs from registered project; verify --workspace, not its marker")
 
     rules_dir = workspace / ".ai-rules"
     require(not rules_dir.is_symlink(), "Unsafe workspace marker directory")
