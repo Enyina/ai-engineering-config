@@ -2,6 +2,11 @@
 
 ## October 17, 2026
 
+**More understandable change descriptions**
+
+Every saved change must now have a short headline that makes sense without technical knowledge. The headline should say what improved rather than listing programming details. Projects with special formatting requirements will still follow those requirements.
+
+
 **Clearer explanations of completed work**
 
 We've improved the shared guidance for personal projects. From now on, completed changes should be saved with a clear description, and updates should explain the difference they make in everyday language.
