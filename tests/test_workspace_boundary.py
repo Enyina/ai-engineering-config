@@ -65,6 +65,16 @@ class WorkspaceBoundaries(unittest.TestCase):
         marker.symlink_to(outside)
         self.assertEqual(self.check("personal-onboard")[0].returncode, 2)
 
+    def test_symlinked_rule_directory_denies(self):
+        destination = self.root / "external"
+        destination.mkdir()
+        (destination / "workspace.json").write_text(
+            '{"schema_version":1,"trust_domain":"personal","policy_owner":"personal"}')
+        (self.root / ".ai-rules").symlink_to(destination, target_is_directory=True)
+        r, d = self.check("personal-rules")
+        self.assertEqual(r.returncode, 2)
+        self.assertEqual(d["reason"], "unsafe_declaration")
+
     def test_excess_keys_are_rejected(self):
         self.marker({"schema_version": 1, "trust_domain": "personal", "policy_owner": "personal",
                      "company_specific_rules": ["private"]})
