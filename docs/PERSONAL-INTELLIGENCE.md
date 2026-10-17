@@ -48,7 +48,7 @@ To check the real official URLs (network use explicitly requested):
 python3 bin/ai-source-watch --network --output public-source-review.json
 ```
 
-A weekly GitHub Action also checks those public sources and uploads a time-limited report artifact. It does not edit rules, pull in restricted content or publish employer data. Some websites block automated checks; **unavailable** means unknown, not unchanged.
+A **twice-daily** GitHub Action checks those public sources at approximately **08:00 and 20:00 Lagos time (07:00 and 19:00 UTC)** and uploads a time-limited report artifact. GitHub may delay scheduled runs. It does not edit rules, pull in restricted content or publish employer data. Some websites block automated checks; **unavailable** means unknown, not unchanged.
 
 ### Explicit metadata baseline
 
@@ -71,7 +71,7 @@ No ML training or unattended design iteration is implied. The agents use the lib
 
 **Personal projects** receive personal security/global rules first; approved category, connected-system, project and feature guidance refines those rules. Missing specialist advice falls back to general personal guidance, and the advisor recommends researching gaps. The same mechanism supports Codex, Claude Code, Cursor, Antigravity and explicitly loaded generic instructions via the existing adapters, but **actual local loading still requires testing**.
 
-**Employer-owned repositories** never automatically inherit personal policy, Moatt design patterns, personal command allowances or private learning artifacts. The advisor refuses to run under an employer trust marker; employers must authorize their own policy packs. When an employer lacks a topic, the agent may suggest independently sourced general publicly available guidance within that employer's approved process, not sync this private personal configuration repo.
+**Employer-owned repositories do not automatically inherit personal policy, project patterns, command allowances or private learning artifacts.** But a company does not need to provide a separate rule for every design or technical decision. An agent may suggest broadly reusable general personal guidance and publicly researched alternatives, **with their sources named explicitly**. These remain suggestions, not active employer policies, and must be checked against the employer's requirements before implementation. The optional `--advisory-for-employer` mode works with a non-confidential general task, even before a company policy pack is configured. With an authorized company policy pack, `--policy-root`, `--workspace` and `--project` enable explicit trust/remote verification without exporting the employer's rules. See [employer advisory guide](EMPLOYER-ADVISORY.md).
 
 Security/ownership and platform constraints outrank personal preferences; a category preference cannot weaken mandatory accessibility, privacy or authorization.
 
@@ -83,6 +83,6 @@ Only link to public source URLs and store short **original interpretations** and
 
 - Patterns are authored candidate comparisons, **not user-tested recommendations** and not claims that a particular publisher endorses the options.
 - The 12 learning routes are registered but not fully automated end-to-end processors; the working parts are controlled catalog, advisor, monitoring and existing proposal workflow.
-- Scheduled HEAD checks may be blocked or noisy. They provide a review queue, not a summary of changed research text.
+- Twice-daily scheduled HEAD checks may be blocked or noisy. They provide a review queue, not a summary of changed research text.
 - Source metadata baselines are not yet approved; a fresh check is needed before meaningful revision comparison.
 - Design implementation, screenshots, Figma artifacts, usability studies and user metrics are not created by the advisor. Carry them out in an authorized project and verify the results.
