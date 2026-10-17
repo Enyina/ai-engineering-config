@@ -8,6 +8,10 @@ Canonical personal engineering rules: [AGENTS.md](AGENTS.md). **Reverse Engineer
 
 Phase A: audit + secure current Mac rules; deterministic scope resolution; Codex/Claude Code/Cursor adapters; reverse-engineering skill; evidence-gated lessons; opt-in onboarding/CI. Phase B: private Godot Time Arena lab proving the complete workflow. **Milestone 1 is open** because the local `default.rules` and `config.safe.toml` are not yet inspected; do not commit unreviewed snapshots or run irreversible resets.
 
+## Employer isolation
+
+Personal rule guidance and Codex command permissions are separate. We never store employer-specific rules or debugging commands in this repository, and we never auto-inject personal overlays into employer projects. Read [trust-domain architecture](docs/TRUST-DOMAINS.md); the new `bin/workspace-boundary.py` preflight is read-only, with fail-closed personal-operation decisions. **It is not yet integrated into the future `ai-rules` resolver.**
+
 ## Scoping
 - Global: `AGENTS.md` — stable standards.
 - Opt-in categories: `categories/` — web product, backend reliability, game development, AI media.
