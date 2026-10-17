@@ -101,6 +101,15 @@ class FreshComputerSetupTests(unittest.TestCase):
         self.assertIn("changed since setup",r.stderr)
         self.assertIn("Human changes",file.read_text())
 
+    def test_rerun_does_not_overwrite_personal_edits(self):
+        self.assertEqual(self.call("--apply").returncode, 0)
+        path = self.personal / "AGENTS.md"
+        path.write_text(path.read_text() + "\nKeep my later edits.\n")
+        result = self.call("--apply")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("changed since setup", result.stderr)
+        self.assertIn("Keep my later edits", path.read_text())
+
     def test_no_trust_marker_means_no_personal_changes(self):
         (self.personal/".ai-rules/workspace.json").unlink()
         r=self.call("--apply")
