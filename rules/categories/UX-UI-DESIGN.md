@@ -23,3 +23,13 @@ Scope: **personal projects only** when the parent web-product category is select
 - After each shipped and validated personal project, capture usability issues, fixes and measured results in a non-confidential learning note.
 - Promote repeated evidence-backed principles to shared guidance via review; keep product-specific experiments local.
 - When an external credible reference is useful, independently validate it and record legal/source constraints before treating it as guidance.
+
+
+## Analytical dashboard craft bar
+- Do not confuse a collection of identical KPI cards with a designed dashboard. Establish a visually distinctive hierarchy around the user's primary decision, then support it with appropriately dense data tables and drill-down.
+- Compare at least two *visually and structurally different* directions when visual quality is contested: vary palette, typographic emphasis, charts, arrangement and navigation, not merely corner radii.
+- Build useful graphics: comparisons should use aligned bars; time-series charts should show times and units; funnels should label each stage and its denominator. Never fabricate a live status, trend or rank in a mockup; show synthetic data explicitly.
+- Use restrained but memorable styling: expressive type, deliberate contrast, one dominant hero or data insight, consistent spacing, purposeful color for status, and cohesive supporting surfaces. Avoid gratuitous gradients, decorative stock imagery and excessive card density.
+- For high-volume operations work, use a real data table with consistent row spacing, useful search/filter/sort controls and drill-down. Keep missing, pending, errored and partial evidence visually distinct.
+- Before asking for design approval, review actual rendered desktop and mobile previews—not just editable layer metadata. Fix visible overlaps, clipped labels, weak hierarchy and illegible numbers. Record any screen states blocked by tooling limits rather than claiming the whole proposal is complete.
+- Source methods, not proprietary visuals: IBM Design Language data visualization basics (https://www.ibm.com/design/language/data-visualization/design/basics/), IBM Carbon data table guidance (https://www.carbondesignsystem.com/building-blocks/core/components/data-table/guidelines), and existing product patterns. Adapt independently.
