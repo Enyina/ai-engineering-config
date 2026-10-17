@@ -24,7 +24,7 @@
 | Safe onboarding / sync | Local CLI and PR helper | Preview-first, managed receipt, drift detection, no unmanaged overwrite. PR helper needs local `git`, `gh` and rights. No automatic employer onboarding. |
 | GitHub automated validation | Yes | [CI run](https://github.com/Enyina/ai-engineering-config/actions/runs/39029329316), **57/57 tests passed** on Linux, plus compile and policy validation. Additional documentation commits do not change tested Python behavior. |
 | Portfolio personal project integration | Yes | [PR #2](https://github.com/Enyina/newPortfolio/pull/2) merged on main as `0961513e47a80439da5f615e813d3c0e65a81f30`; prior `AGENTS.md` retained; CI successful on branch. |
-| Moatt personal project integration | Pending PR | [PR #1](https://github.com/Enyina/moatt/pull/1) adds trust marker, Claude/Cursor companion files and documentation, preserving `AGENTS.md`. Await CI result and safe merge confirmation. |
+| Moatt personal project integration | Yes | [PR #1](https://github.com/Enyina/moatt/pull/1) merged as `e207fba6ea41edf10b47b3aa5299978d9f0dcc6e`; [Moatt CI](https://github.com/Enyina/moatt/actions/runs/39029486432) passed assets verification, typecheck, automated tests, build, Playwright e2e and browser evidence upload. Existing `AGENTS.md` preserved. |
 | Gaming lab prototype | Starter asset only | Source ZIP generated separately; private GitHub gaming repo not verified accessible; Godot binary and Mac controller runtime unavailable here. |
 
 ## Active hierarchy and precedence
@@ -60,7 +60,7 @@ The real Moatt and portfolio branches add explicit personal trust markers. Until
 - Owner reruns the Mac suite and validates native rule loading in installed Codex, Claude Code, Cursor and Antigravity. Linux CI alone is not native-runtime validation.
 - Review/replace old Mac auto-allow entries through a separate protected backup/change/rollback workflow; confirm actual sandbox policy. Historical command analysis does not enforce safer permissions.
 - The existing central duplicated legacy rules are not yet migrated into a single canonical registry; current engine's `policies/personal/policy.json` is the source for generated outputs, while legacy documentation still exists.
-- Confirm target repositories' authorizations and real source behavior. Portfolio documentation-only merge is not a deployment acceptance test. Moatt PR should merge after its own CI passes.
+- Confirm target repositories' authorizations and real source behavior. Portfolio documentation-only merge is not a deployment acceptance test. Moatt project guidance PR has now merged after its CI passed; native agent loading still requires local verification.
 - GitHub App lacks a verified private game repo creation action. The game starter is **not a proven playable Mac M1 build**, does not establish controller acceptance and cannot be described as complete Milestone 7.
 - GitHub Actions validates configuration tests but does **not** automatically enumerate and open cross-repo rule-update PRs unattended. The `sync-pr` helper is explicit/local to prevent cross-employer automation mistakes. A recurring authorized GitHub App with narrowly scoped repo permissions is needed for safe background drift PRs.
 - Native format adapters cover major requested tools, plus generic. An entirely unknown future tool cannot automatically consume `.ai-rules/INSTRUCTIONS.md` until its own instruction format is researched and adapter added.
