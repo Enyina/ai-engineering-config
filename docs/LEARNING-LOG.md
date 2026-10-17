@@ -56,3 +56,19 @@ Status: proposed
 Observed: Publicly described CC0 3D mannequin assets were discoverable, but the connected repository interface could not retrieve/write binary GLB content. A license statement and download listing are not equivalent to an installed, verified asset.
 Rule: Before claiming a third-party asset integration, verify permission/license, exact asset bytes/provenance, stable bundling, runtime loading, orientation/scale and fallback behavior. Record blockers explicitly; never substitute a live third-party CDN dependency without reliability and licensing review.
 Verification: imported binary exists in the release tree and automated loading/visual smoke checks pass.
+
+
+## 2026-10-17 — Cross-browser tests must verify graceful capability fallback
+Scope: shared/web-product and 3D editor
+Status: validated by Moatt CI (run 39029153168)
+Observed: Firefox headless did not offer usable WebGL. Moatt correctly rendered an accessible "3D unavailable" fallback; initial tests incorrectly required a mannequin network request and GPU counters despite no graphics context. Chromium and WebKit had working 3D renderers.
+Rule: Feature tests should separately validate supported-capability behavior and explicit unsupported-capability fallback. Never silently skip a product failure; require an intentional, visible fallback when an environment lacks WebGL. Measure GPU resource counts only in environments that actually created a context.
+Verification: Moatt all 40 desktop/mobile Chromium, Firefox, WebKit Playwright checks plus unit/build passed in run 39029153168.
+Reference: Moatt e2e/studio.spec.ts and the recorded failure context.
+
+## 2026-10-17 — Deployment builds and deployment permissions are separate outcomes
+Scope: shared/core
+Status: validated by Moatt GitHub Actions
+Observed: Moatt's static Next.js bundle built successfully with pinned CC0 mannequin, but GitHub Pages could not be enabled by the workflow token (Resource not accessible by integration).
+Rule: Report validated build artifacts separately from live deployment. If host/account authorization blocks publication, preserve release artifact, document the precise required permission and do not invent a public URL or claim the site was deployed.
+Verification: Static site archive produced by Moatt deployment workflow, while configure-pages failed with explicit permission denial.
