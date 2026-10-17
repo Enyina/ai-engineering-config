@@ -1,0 +1,340 @@
+{
+  "schema_version": 1,
+  "trust_domain": "personal",
+  "license_notice": "Original comparisons and hypotheses inspired by linked public documentation; not verbatim copyrighted source text. Options require project-specific testing.",
+  "patterns": [
+    {
+      "id": "editor-layout",
+      "domain": "design",
+      "category": "interaction-and-editors",
+      "tags": [
+        "editor",
+        "3d",
+        "garment",
+        "canvas",
+        "layout",
+        "draw",
+        "mannequin"
+      ],
+      "projects": [
+        "moatt"
+      ],
+      "sources": [
+        "nng-heuristics",
+        "wcag22",
+        "carbon",
+        "apple-hig"
+      ],
+      "problem": "Choose a working layout that balances the garment preview, discoverable tools and learning effort.",
+      "options": [
+        {
+          "id": "canvas-first",
+          "label": "Large preview, tools when needed",
+          "benefit": "The clothing preview stays central and uncluttered.",
+          "tradeoff": "New users may overlook controls until helped by onboarding.",
+          "when": "Frequent creation, mobile space constraints, visual manipulation.",
+          "verify": "Measure completion and accidental tool switching; test discoverability on first use."
+        },
+        {
+          "id": "studio-panels",
+          "label": "Permanent studio panels",
+          "benefit": "All layers and controls are visible for complex editing.",
+          "tradeoff": "Smaller preview and more visual effort, especially on phones.",
+          "when": "Experienced designers and complex multi-layer sessions.",
+          "verify": "Compare time to locate tools and task completion for newcomers and experienced users."
+        },
+        {
+          "id": "guided-steps",
+          "label": "Guided step-by-step design",
+          "benefit": "A beginner knows what to do next and can finish a first garment.",
+          "tradeoff": "Frequent editing may become slower, and jumping between steps needs care.",
+          "when": "First-run workflows and narrow single-purpose products.",
+          "verify": "Test first garment completion, repeat edits and back-navigation without losing work."
+        }
+      ]
+    },
+    {
+      "id": "product-home",
+      "domain": "design",
+      "category": "visual-foundations",
+      "tags": [
+        "portfolio",
+        "hero",
+        "landing",
+        "homepage",
+        "typography",
+        "visual",
+        "branding"
+      ],
+      "projects": [
+        "portfolio"
+      ],
+      "sources": [
+        "nng-heuristics",
+        "wcag22",
+        "apple-hig",
+        "material3"
+      ],
+      "problem": "Explain the product or creator's value at first glance while maintaining a distinctive visual identity.",
+      "options": [
+        {
+          "id": "proof-first",
+          "label": "Show credible work immediately",
+          "benefit": "Visitors can judge work and results without hunting.",
+          "tradeoff": "A visually dense first screen risks overwhelming visitors.",
+          "when": "Conversion to enquiries or employment is the principal outcome.",
+          "verify": "Observe whether visitors can identify expertise and find a relevant project in seconds."
+        },
+        {
+          "id": "editorial",
+          "label": "Distinctive editorial introduction",
+          "benefit": "Memorable personality and visual rhythm support a personal brand.",
+          "tradeoff": "May bury practical evidence unless project access stays obvious.",
+          "when": "Creative differentiation is central to the visitor's decision.",
+          "verify": "Measure first-screen understanding, project discovery and mobile navigation."
+        },
+        {
+          "id": "hybrid",
+          "label": "Clear introduction plus proof",
+          "benefit": "Balances personality with evidence and a direct next step.",
+          "tradeoff": "Needs disciplined content hierarchy to avoid clutter.",
+          "when": "Broad audiences include recruiters, buyers and potential collaborators.",
+          "verify": "Check clarity, accessibility, project clickthrough and contact intent."
+        }
+      ]
+    },
+    {
+      "id": "forms-and-errors",
+      "domain": "design",
+      "category": "forms-and-feedback",
+      "tags": [
+        "form",
+        "checkout",
+        "signup",
+        "error",
+        "feedback",
+        "payment"
+      ],
+      "projects": [],
+      "sources": [
+        "govuk",
+        "wcag22",
+        "nng-heuristics",
+        "baymard-checkout"
+      ],
+      "problem": "Reduce avoidable mistakes while helping people recover and complete tasks.",
+      "options": [
+        {
+          "id": "single-page",
+          "label": "One clear page",
+          "benefit": "People can see the whole task and edit information freely.",
+          "tradeoff": "Long forms can feel intimidating.",
+          "when": "Short forms and users who need to compare fields.",
+          "verify": "Test errors, keyboard use and actual completion."
+        },
+        {
+          "id": "progressive",
+          "label": "Reveal only what is needed",
+          "benefit": "Reduces initial complexity while maintaining the full workflow.",
+          "tradeoff": "Hidden fields and state transitions can surprise people.",
+          "when": "Conditional forms with many irrelevant questions.",
+          "verify": "Test branching paths, validation, focus and backtracking."
+        },
+        {
+          "id": "steps",
+          "label": "Clearly labelled steps",
+          "benefit": "Complex tasks feel manageable and progress is visible.",
+          "tradeoff": "Requires reliable save and back behavior.",
+          "when": "Long submissions that have distinct phases.",
+          "verify": "Test returning to earlier steps, recovery after interruption and total time."
+        }
+      ]
+    },
+    {
+      "id": "dashboard-layout",
+      "domain": "design",
+      "category": "information-architecture",
+      "tags": [
+        "dashboard",
+        "admin",
+        "monitor",
+        "table",
+        "analytics"
+      ],
+      "projects": [],
+      "sources": [
+        "carbon",
+        "atlassian",
+        "nng-heuristics",
+        "wcag22"
+      ],
+      "problem": "Help people identify what needs attention and act without navigating blindly.",
+      "options": [
+        {
+          "id": "action-first",
+          "label": "Problems and actions first",
+          "benefit": "Urgent work becomes obvious.",
+          "tradeoff": "May hide broader patterns and context.",
+          "when": "Operational teams responding to incidents or requests.",
+          "verify": "Measure time from alert to action, missed critical cases and false alarms."
+        },
+        {
+          "id": "overview-first",
+          "label": "Overview and trends first",
+          "benefit": "Supports understanding performance and trends.",
+          "tradeoff": "Can delay immediate action if poorly prioritized.",
+          "when": "Periodic management and review tasks.",
+          "verify": "Test whether users can identify a trend and locate its underlying records."
+        },
+        {
+          "id": "record-first",
+          "label": "Searchable records first",
+          "benefit": "Makes detailed investigation and editing fast.",
+          "tradeoff": "New users can struggle without summary cues.",
+          "when": "Frequent individual record lookup and correction.",
+          "verify": "Measure findability, edit errors, accessible sorting and filtering."
+        }
+      ]
+    },
+    {
+      "id": "service-recovery",
+      "domain": "engineering",
+      "category": "backend-reliability",
+      "tags": [
+        "retry",
+        "integration",
+        "reliability",
+        "webhook",
+        "payment",
+        "job",
+        "queue"
+      ],
+      "projects": [],
+      "sources": [
+        "nist-ssdf",
+        "owasp-asvs",
+        "google-eng"
+      ],
+      "problem": "Choose failure handling that keeps outcomes correct when an external request or background job fails.",
+      "options": [
+        {
+          "id": "idempotent-retry",
+          "label": "Retry safely with a stable request identity",
+          "benefit": "Transient failures can recover without repeating an intended result.",
+          "tradeoff": "Requires tracking attempts and correctly defining a unique action.",
+          "when": "Repeatable operations with bounded external failures.",
+          "verify": "Force duplicate requests, partial failures and timeout-after-success scenarios."
+        },
+        {
+          "id": "durable-outbox",
+          "label": "Save work before sending it",
+          "benefit": "Work survives interruption between a local decision and external delivery.",
+          "tradeoff": "Adds a worker, lifecycle monitoring and replay handling.",
+          "when": "Reliable event delivery or external side effects are necessary.",
+          "verify": "Kill execution between writing and sending, replay events, and verify exactly one intended business outcome."
+        },
+        {
+          "id": "manual-review",
+          "label": "Stop and request review when uncertain",
+          "benefit": "Prevents unsafe automatic repeats for irreversible or ambiguous outcomes.",
+          "tradeoff": "More operational effort and slower resolution.",
+          "when": "Money, destructive changes or unknown external outcomes.",
+          "verify": "Simulate ambiguous provider responses and verify safe hold plus clear resolution path."
+        }
+      ]
+    },
+    {
+      "id": "frontend-state",
+      "domain": "engineering",
+      "category": "frontend",
+      "tags": [
+        "react",
+        "frontend",
+        "state",
+        "cache",
+        "render",
+        "editor"
+      ],
+      "projects": [],
+      "sources": [
+        "react-docs",
+        "mdn-web",
+        "google-eng"
+      ],
+      "problem": "Pick the simplest state model that keeps users' edits and server data consistent.",
+      "options": [
+        {
+          "id": "local-state",
+          "label": "Local ownership for temporary edits",
+          "benefit": "Minimal dependencies and clear control over an isolated interaction.",
+          "tradeoff": "Can become difficult when unrelated screens need the same state.",
+          "when": "Ephemeral editor controls and one-screen interactions.",
+          "verify": "Test reset, undo, switching tasks and loss of unsaved work."
+        },
+        {
+          "id": "server-cache",
+          "label": "Server data cache with explicit refresh",
+          "benefit": "Reusable asynchronous data and coherent loading/error behavior.",
+          "tradeoff": "Cache invalidation and optimistic updates need clear policies.",
+          "when": "Many views share changing server information.",
+          "verify": "Test stale data, request failure, optimistic rollback and switching accounts."
+        },
+        {
+          "id": "canonical-document",
+          "label": "One editable document with derived views",
+          "benefit": "Multiple previews reflect the same saved source.",
+          "tradeoff": "Document versioning and migration require careful design.",
+          "when": "Editors have multiple modes, undo/redo, save/reopen and exports.",
+          "verify": "Round-trip save/reopen, concurrent editing and view consistency."
+        }
+      ]
+    },
+    {
+      "id": "code-quality",
+      "domain": "engineering",
+      "category": "quality-and-testing",
+      "tags": [
+        "refactor",
+        "testing",
+        "review",
+        "performance",
+        "quality",
+        "architecture"
+      ],
+      "projects": [],
+      "sources": [
+        "google-eng",
+        "nist-ssdf",
+        "playwright",
+        "storybook"
+      ],
+      "problem": "Choose proportionate checks and change scope while protecting existing behavior.",
+      "options": [
+        {
+          "id": "focused-checks",
+          "label": "Check the changed behavior first",
+          "benefit": "Fast feedback for a small, well-isolated change.",
+          "tradeoff": "May miss integration breakages.",
+          "when": "Small changes with understood boundaries.",
+          "verify": "Run affected tests and inspect nearby contracts and failure cases."
+        },
+        {
+          "id": "integration-contracts",
+          "label": "Test the parts working together",
+          "benefit": "Finds failures at component and service boundaries.",
+          "tradeoff": "Slower setup and more complicated test environments.",
+          "when": "API, persistence, payments or multiple services change together.",
+          "verify": "Test real boundary interactions, idempotency and fallback."
+        },
+        {
+          "id": "user-journey",
+          "label": "Check the full user journey",
+          "benefit": "Catches user-visible breaks that unit checks may miss.",
+          "tradeoff": "More expensive and subject to environment variability.",
+          "when": "Major workflow, UX or release-boundary changes.",
+          "verify": "Test complete desktop/mobile journey and negative states with recorded evidence."
+        }
+      ]
+    }
+  ]
+}
