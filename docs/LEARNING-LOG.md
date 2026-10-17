@@ -33,3 +33,11 @@ Observed: A mobile-emulated viewport required scrolling to the canvas and testin
 Rule: In responsive UI acceptance tests, use visible-viewport scroll handling, device-appropriate input methods, and unambiguous accessible names/locators. Verify end-user outcomes, not just element presence.
 Verification: Latest desktop/mobile Chromium Playwright suite passed 10 scenarios.
 References: Moatt CI success `39025853488`.
+
+## 2026-10-17 — Preview fidelity versus production fidelity
+Scope: category (3D/web product)
+Status: proposed; production-fidelity tests still pending
+Observed: Moatt's initial flat rectangular 3D placeholder lacked a recognizable garment outline. A garment-shaped, UV-mapped preview improves silhouette fidelity, but remains distinct from verified print placement or physically accurate cloth construction.
+Rule candidate: In visual configuration products, label the accuracy tier of every representation (conceptual mockup, visual approximation, calibrated manufacturing output). Never treat successful smoke tests or successful WebGL rendering as proof of real-world fidelity.
+Verification needed before promotion: side-by-side screenshot reviews and measurements against calibrated outputs, plus memory/performance tests.
+Reference: Enyina/moatt commit 1871598b, CI 39026492744.
