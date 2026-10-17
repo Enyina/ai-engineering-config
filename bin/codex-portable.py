@@ -159,11 +159,39 @@ def destination_for(relative):
     fail("Unexpected snapshot file: " + key)
 
 def check_destination(destination):
-    node = destination
-    while node != node.parent:
+    """Reject symlinks in managed user paths, not macOS system directory aliases.
+
+    macOS tempfile often lives under /var, which links to /private/var.
+    The HOME directory itself is a trusted boundary. Symlinks *inside* that
+    directory (e.g. ~/.codex/rules) are still rejected as unsafe.
+    """
+    path = Path(os.path.abspath(destination))
+    home = Path(os.path.abspath(HOME))
+    codex = Path(os.path.abspath(CODEX))
+    if path == home or home in path.parents:
+        anchor = home
+    elif path == codex or codex in path.parents:
+        # Supports an explicitly configured CODEX_HOME outside HOME.
+        anchor = codex.parent
+    else:
+        fail("Destination is outside managed user directories: " + str(path))
+    node = path
+    while node != anchor:
         if node.is_symlink():
             fail("Symlink destination refused: " + str(node))
         node = node.parent
+
+def require_allowed_managed_file(destination):
+    """Disallow arbitrary receipt paths and built-in skill modifications."""
+    dest = Path(os.path.abspath(destination))
+    for prefix, root in SOURCES.items():
+        candidate = Path(os.path.abspath(root))
+        if candidate.suffix and dest == candidate:
+            return
+        if not candidate.suffix and candidate in dest.parents and ".system" not in dest.parts:
+            if dest.suffix.lower() in TEXT_SUFFIX:
+                return
+    fail("Receipt refers to a non-managed path: " + str(destination))
 
 def restore(apply, config=False):
     manifest = validated_snapshot()
@@ -233,6 +261,7 @@ def reset(apply, confirmed):
     # Refuse any changed or tampered managed file before removing anything.
     for item in installed:
         target = Path(item["path"])
+        require_allowed_managed_file(target)
         check_destination(target)
         if not target.is_file() or digest(target) != item["sha256"]:
             fail("Installed rule modified; refusing reset: " + str(target))

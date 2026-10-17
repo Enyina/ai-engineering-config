@@ -72,6 +72,35 @@ class SafetyTests(unittest.TestCase):
         self.assertTrue(receipt["files"][0]["backup"])
         self.assertTrue(Path(receipt["files"][0]["backup"]).exists())
 
+    def test_restore_accepts_system_alias_before_trusted_home(self):
+        # On macOS /var points to /private/var. The alias is above HOME.
+        root = self.home.parent
+        real = root / "real-var"
+        real.mkdir()
+        alias = root / "var"
+        alias.symlink_to(real, target_is_directory=True)
+        aliased_home = alias / "home"
+        aliased_home.mkdir()
+        aliased_rules = aliased_home / ".codex" / "rules"
+        aliased_rules.mkdir(parents=True)
+        (aliased_rules / "default.rules").write_text("# alias-safe test\\n")
+        self.env["HOME"] = str(aliased_home)
+        self.env["CODEX_HOME"] = str(aliased_home / ".codex")
+        self.assertEqual(self.cli("capture").returncode, 0)
+        result = self.cli("restore", "--apply")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((aliased_rules / "default.rules").read_text(), "# alias-safe test\\n")
+
+    def test_restore_refuses_symlink_in_managed_directory(self):
+        self.assertEqual(self.cli("capture").returncode, 0)
+        old_rules = self.codex / "real-rules"
+        self.rules.rename(old_rules)
+        self.rules.symlink_to(old_rules, target_is_directory=True)
+        result = self.cli("restore", "--apply")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Symlink destination refused", result.stderr)
+        self.assertFalse((self.home / ".codex-portable-installed.json").exists())
+
     def test_reset_without_receipt_cannot_delete_existing_files(self):
         result = self.cli("reset", "--apply", "--confirmed-remote")
         self.assertEqual(result.returncode, 0, result.stderr)

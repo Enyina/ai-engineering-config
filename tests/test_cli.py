@@ -1,5 +1,6 @@
 """Lightweight tests for the standalone personal Codex CLI."""
 import os
+import json
 import subprocess
 import sys
 import tempfile
@@ -38,10 +39,18 @@ class PortableCliTests(unittest.TestCase):
         self.assertEqual(response.returncode, 0, response.stderr)
         self.assertTrue((self.codex / "AGENTS.md").exists())
 
-    def test_reset_requires_confirmed_remote(self):
+    def test_reset_requires_confirmed_remote_for_managed_install(self):
+        rule = self.codex / "AGENTS.md"
+        import hashlib
+        checksum = hashlib.sha256(rule.read_bytes()).hexdigest()
+        receipt = self.home / ".codex-portable-installed.json"
+        receipt.write_text(json.dumps({"files": [
+            {"path": str(rule), "sha256": checksum, "backup": None}
+        ]}))
         response = self.invoke("reset", "--apply")
         self.assertNotEqual(response.returncode, 0)
-        self.assertTrue((self.codex / "AGENTS.md").exists())
+        self.assertIn("--confirmed-remote", response.stderr)
+        self.assertTrue(rule.exists())
 
 if __name__ == "__main__":
     unittest.main()

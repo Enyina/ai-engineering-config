@@ -44,6 +44,22 @@ find ~/Projects -type f \( -name AGENTS.md -o -name AGENTS.override.md \) \
 
 Do **not** upload employer-owned project instructions to a personal repo. For a repository being examined, running `audit` from within it can report the instruction chain relevant to that current working directory, but it is not a comprehensive per-machine inventory.
 
+## 2026-10-17 Mac results — revised capture and tests
+
+The user ran the revised capture after a `git pull --ff-only`. **Capture succeeded** and the new inventory has just:
+
+- `snapshot/codex/config.safe.toml`
+- `snapshot/codex/rules/default.rules`
+- `snapshot/manifest.json`
+
+No bundled `.system` skills were captured, and no personal global `AGENTS.md` was found. This is a scope observation, not proof that Codex uses no project-level or session rules.
+
+The user reported **10 tests: 6 passed, 4 failed**. Three restore tests rejected the system-level `/var` symlink on macOS; one reset test expected an error even though an installation receipt was absent and safe reset intentionally does nothing. No restore or reset was reported as applied to the user's live configuration.
+
+Remediation lives in branch `fix/mac-portable-tests-and-safe-reset`: trust the HOME path boundary while still rejecting symlinks inside personal managed paths; fix the stale reset test; add macOS path-alias and unsafe symlink regressions; add CI and ignore unreviewed snapshots. **Do not describe these fixes as passing on a Mac until a new local result is supplied.**
+
+After the fix is merged, run `git pull --ff-only`, `python3 -m unittest discover -s tests -v`, and `python3 bin/codex-portable.py audit`. No new capture is necessary to review the already-clean three-file inventory.
+
 ## Current tool safety notes
 
 - Updated capture skips Codex-bundled `.system` skills.
