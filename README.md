@@ -4,7 +4,7 @@ Canonical personal engineering rules: [AGENTS.md](AGENTS.md). **Reverse Engineer
 
 ## Personal design + engineering intelligence
 
-The private personal config now includes a sourced [design and engineering knowledge system](docs/PERSONAL-INTELLIGENCE.md): [public source catalog](knowledge/sources/catalog.json), [comparison patterns](knowledge/patterns/catalog.json), an evidence-linked [rule map](knowledge/rule-evidence.json), a deterministic `bin/ai-intelligence` advisor, scoped research skills and a weekly **review-only** source-update check. It does not copy employers' rules or automatically promote research into policies.
+The private personal config now includes a sourced [design and engineering knowledge system](docs/PERSONAL-INTELLIGENCE.md): [public source catalog](knowledge/sources/catalog.json), [comparison patterns](knowledge/patterns/catalog.json), an evidence-linked [rule map](knowledge/rule-evidence.json), a deterministic `bin/ai-intelligence` advisor, scoped research skills and a **twice-daily, review-only** source-update check (approximately 08:00 and 20:00 Lagos time). It does not copy employers' rules or automatically promote research into policies.
 
 ```sh
 python3 bin/ai-intelligence validate
@@ -23,6 +23,15 @@ Completed authorized work should end in a focused commit and short release notes
 **[Self-Improving AI Engineering System — 7 milestones](docs/SELF-IMPROVING-ROADMAP.md)**
 
 Phase A: audit + secure current Mac rules; deterministic scope resolution; Codex/Claude Code/Cursor adapters; reverse-engineering skill; evidence-gated lessons; opt-in onboarding/CI. Phase B: private Godot Time Arena lab proving the complete workflow. **Milestone 1 is open** because the local `default.rules` and `config.safe.toml` are not yet inspected; do not commit unreviewed snapshots or run irreversible resets.
+
+## External advice for employer work
+
+When employer-specific rules do not answer a design or coding question, you can still compare credible public patterns and relevant **general** personal principles, with full provenance, benefits, trade-offs and tests. They are suggestions, not employer policy. No company code or rules are imported into this personal repository. See [outside advice and safe usage](docs/EMPLOYER-ADVISORY.md).
+
+```sh
+python3 bin/ai-intelligence suggest --advisory-for-employer \\
+  --domain engineering --task "evaluate reliable retry behavior"
+```
 
 ## Employer isolation
 
