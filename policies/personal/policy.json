@@ -67,6 +67,16 @@
       "id": "crosssystem.contracts",
       "kind": "guidance",
       "text": "When multiple repositories form a connected system, document API contracts, versioned data ownership, integration tests and compatible rollouts."
+    },
+    {
+      "id": "delivery.commit",
+      "kind": "required",
+      "text": "For every completed authorized change, create a focused Git commit with a clear plain-English summary. Do not commit secrets or unfinished unrelated work. If commits are restricted by the project's rules or the user, do not commit; explain why and what remains. Never assume a commit grants permission to push or release."
+    },
+    {
+      "id": "delivery.release-notes",
+      "kind": "required",
+      "text": "For every meaningful delivered change, write or update the project's human-facing release notes. Write for people who do not work in software: short everyday English, explain what changed and why it matters, say if anything is still unavailable, and avoid code jargon, internal file names, technical command names and unexplained abbreviations. Keep technical test and implementation details in a separate engineering report, not the release notes."
     }
   ],
   "global": {
@@ -76,7 +86,9 @@
       "security.approvals",
       "quality.evidence",
       "quality.regressions",
-      "research.reverse-first"
+      "research.reverse-first",
+      "delivery.commit",
+      "delivery.release-notes"
     ],
     "preferences": {
       "change_scope": "Small reversible changes; review adjacent contracts."

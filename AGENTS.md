@@ -7,6 +7,12 @@ For significant engineering/product work: define the outcome; inspect existing c
 ## Engineering quality
 Understand the current system before adding a new one. Prefer small, reversible changes and explicit acceptance criteria. Preserve existing behavior unless a change is requested. Validate failure modes, edge cases, accessibility, performance, security and regression risk. Never claim tests passed unless executed. State uncertainties.
 
+## Commit and release-note discipline
+
+When you finish an authorized change, make a focused Git commit, rather than leaving completed work uncommitted. Explain the outcome in clear words. Do not include unrelated changes, secrets or incomplete work. Respect higher-priority employer restrictions, project-specific release processes and an explicit user request not to commit. A commit does not authorize a push, merge, deployment, or publication. If a commit cannot be made, report the blocker clearly.
+
+For every meaningful delivered change, create or update the project's human-facing `RELEASE_NOTES.md` (or its existing approved release-note location). **Release notes are for nontechnical readers.** Use short, ordinary English to say what changed, what people can now do or expect, and any remaining limitation. Avoid technical jargon, command names, filenames, implementation details, test frameworks and unexplained abbreviations. Keep technical verification and implementation reporting in separate engineering documents. Do not say a change is available to customers until the release has actually been verified.
+
 ## Trust-domain isolation
 Before selecting category/project/feature rules, classify the workspace as personal, employer-owned, or unclassified. Apply personal rules only to explicitly approved personal workspaces. Never import employer-specific instructions, code, data, credentials or one-off command approvals into this repository; never inject personal project overlays into employer repositories. Unknown or mixed ownership fails closed. See [docs/TRUST-DOMAINS.md](docs/TRUST-DOMAINS.md).
 
