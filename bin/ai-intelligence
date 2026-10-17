@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Personal-only, source-backed design and engineering recommendation engine.
+"""Source-backed design and engineering advice with explicit trust boundaries.
 
-Read-only. Never copies employer policies, writes project files, or claims a
-reference option is already proven for a particular user journey.
+Personal projects use approved personal scope. Employer advisory mode uses only
+public reference links and general personal guidance explicitly labeled as
+external suggestions, never employer policy or automatic rule inheritance.
+No project files or policy rules are written.
 """
 import argparse
 import json
@@ -15,6 +17,13 @@ from urllib.parse import urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = ROOT / "knowledge" / "sources" / "catalog.json"
 PATTERNS = ROOT / "knowledge" / "patterns" / "catalog.json"
+EVIDENCE = ROOT / "knowledge" / "rule-evidence.json"
+PERSONAL_PACK = ROOT / "policies" / "personal" / "policy.json"
+PERSONAL_POLICY_LINK = "https://github.com/Enyina/ai-engineering-config/blob/main/policies/personal/policy.json"
+ADVISORY_RULES = {
+    "design": ("research.options", "design.clarity", "design.accessibility", "design.consistency", "design.evaluation"),
+    "engineering": ("research.options", "engineering.source-evidence", "engineering.boundaries", "engineering.verification"),
+}
 VALID_DOMAINS = {"design", "engineering"}
 SLUG = re.compile(r"^[a-z][a-z0-9-]{1,63}$")
 
@@ -82,17 +91,48 @@ def validate():
                      "Incomplete alternative: " + field)
     return sources, library["patterns"]
 
-def preflight(workspace, project, feature):
+def preflight(workspace, project, feature, policy_root=None, intended_domain="personal"):
     command = [sys.executable, str(ROOT / "bin" / "ai-rules"), "resolve",
                "--workspace", str(workspace), "--project", project]
     if feature:
         command += ["--feature", feature]
+    if policy_root is not None:
+        command += ["--policy-root", str(policy_root)]
     check = subprocess.run(command, capture_output=True, text=True, timeout=15)
-    need(check.returncode == 0, "Personal workspace, origin or selected feature not authorized")
+    need(check.returncode == 0, "Workspace, Git origin or policy domain not authorized")
     resolved = json.loads(check.stdout)
-    need(resolved["trust_domain"] == "personal" and resolved["owner"] == "personal",
-         "Employer policy cannot use personal recommendations")
+    need(resolved["trust_domain"] == intended_domain, "Policy trust domain does not match requested mode")
+    if intended_domain == "personal":
+        need(resolved["owner"] == "personal", "Personal policy owner mismatch")
+    else:
+        need(resolved["owner"] != "personal", "Employer advisory requires an employer-owned policy pack")
     return resolved
+
+def employer_advisory_rules(domain, sources):
+    """Expose only a vetted subset of general guidance with explicit provenance."""
+    pack = data(PERSONAL_PACK)
+    links = data(EVIDENCE)["rule_sources"]
+    known = {item["id"]:item for item in pack["rules"]}
+    guidance = []
+    for rid in ADVISORY_RULES[domain]:
+        need(rid in pack["global"]["rules"] or
+             any(rid in cat.get("rules", []) for cat in pack["categories"].values()),
+             "Proposed general guidance is not registered in personal rules")
+        need(rid in links and rid in known, "Missing candidate rule provenance")
+        refs = links[rid]["sources"]
+        need(isinstance(refs, list) and refs and
+             all(k in sources and sources[k]["source_scope"] == "public" for k in refs),
+             "Candidate rule lacks public references")
+        guidance.append({
+            "id": rid, "guidance": known[rid]["text"],
+            "source": {"type":"personal_generic_rule", "repository":"Enyina/ai-engineering-config",
+                       "rule_id":rid, "url":PERSONAL_POLICY_LINK},
+            "references":[{"publisher":sources[k]["publisher"],"url":sources[k]["url"]}
+                          for k in refs],
+            "status":"candidate_only_not_employer_policy",
+            "authority":"Employer and platform instructions take precedence. Review compatibility before use."
+        })
+    return guidance
 
 def suggest(sources, patterns, context, domain, task, tags, limit):
     requested = set(x.lower() for x in tags)
@@ -121,10 +161,13 @@ def suggest(sources, patterns, context, domain, task, tags, limit):
                           "url": sources[s]["url"], "type": sources[s]["kind"]}
                          for s in p["sources"]],
             "alternatives": p["options"],
+            "origin": {"type":"public_research_interpreted_in_personal_library",
+                       "repository":"Enyina/ai-engineering-config",
+                       "status":"reference_only_not_employer_policy"},
             "recommendation_status": "compare_then_validate",
             "selection": "none_preselected"
         })
-    return {"trust_domain":"personal","project":context["project"],
+    return {"trust_domain":context["trust_domain"],"project":context["project"],
             "feature":context.get("feature"),"domain":domain,"task":task,
             "matches":chosen,"unmatched":not bool(chosen),
             "advice": ("No relevant approved pattern. Propose a scoped research gap "
@@ -137,6 +180,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=("validate", "suggest"))
     parser.add_argument("--workspace", type=Path)
+    parser.add_argument("--policy-root", type=Path,
+                        help="Explicit external employer-owned policy pack when verifying an employer workspace")
+    parser.add_argument("--advisory-for-employer", action="store_true",
+                        help="Suggest generic research and labeled personal guidance without applying company rules")
     parser.add_argument("--project")
     parser.add_argument("--feature")
     parser.add_argument("--domain", choices=sorted(VALID_DOMAINS))
@@ -150,13 +197,45 @@ def main():
             output = {"valid": True, "trust_domain":"personal",
                       "sources": len(sources),"patterns":len(patterns)}
         else:
-            need(bool(args.workspace and args.project and args.domain and args.task),
-                 "A workspace, project, domain and task are required")
+            need(bool(args.domain and args.task),
+                 "A domain and short, non-confidential task description are required")
             need(1 <= args.limit <= 5 and len(args.task) <= 1000,
                  "Invalid limit or task length")
-            context = preflight(args.workspace, args.project, args.feature)
-            output = suggest(sources, patterns, context, args.domain, args.task,
-                             [t.strip() for t in args.tags.split(",") if t.strip()], args.limit)
+            if args.advisory_for_employer:
+                # Lightweight advisory is useful before an employer has set up
+                # a policy pack. It is never treated as approved employer policy.
+                provided = [args.workspace is not None, bool(args.project),
+                            args.policy_root is not None]
+                need(all(provided) or not any(provided),
+                     "For verified employer context supply workspace, project and external policy-root together")
+                need(not args.feature or all(provided),
+                     "A feature requires a verified employer workspace and policy pack")
+                if all(provided):
+                    need(args.policy_root.resolve() != (ROOT / "policies" / "personal").resolve(),
+                         "Personal policy pack cannot stand in for employer policy")
+                    verified = preflight(args.workspace, args.project, args.feature,
+                                         args.policy_root, "employer")
+                    context = {"trust_domain":"employer","project":None,"feature":None}
+                    check_state = "employer_pack_workspace_and_origin_checked"
+                else:
+                    context = {"trust_domain":"employer","project":None,"feature":None}
+                    check_state = "not_checked_no_employer_context_provided"
+                output = suggest(sources, patterns, context, args.domain, args.task,
+                                 [t.strip() for t in args.tags.split(",") if t.strip()], args.limit)
+                output.pop("task", None)  # Do not print employer task text in reports.
+                output["mode"] = "external_suggestions_only"
+                output["employer_policy_check"] = check_state
+                output["policy_conflicts_checked"] = False
+                output["employer_rules_modified"] = False
+                output["adoption"] = "Review employer policy, licensing and real project constraints; do not auto-import."
+                output["candidate_personal_guidance"] = employer_advisory_rules(args.domain, sources)
+            else:
+                need(args.policy_root is None, "Use --advisory-for-employer for employer policy packs")
+                need(bool(args.workspace and args.project),
+                     "A personal workspace and project are required")
+                context = preflight(args.workspace, args.project, args.feature)
+                output = suggest(sources, patterns, context, args.domain, args.task,
+                                 [t.strip() for t in args.tags.split(",") if t.strip()], args.limit)
         print(json.dumps(output, indent=2, ensure_ascii=False))
     except (InputError, ValueError, OSError, KeyError, subprocess.TimeoutExpired) as exc:
         # Intentionally omit raw task, paths, secrets or content.
