@@ -19,7 +19,8 @@ ADVISOR=ROOT/"bin"/"ai-intelligence"
 POLICY=ROOT/"policies"/"personal"/"policy.json"
 DESIGN=("design","layout","look","looks","style","styling","ux","ui","screen",
         "dashboard","page","website","color","colour","typography","navigation",
-        "form","buttons","visual","interface","mockup","mannequin","responsive")
+        "form","buttons","visual","interface","mockup","mannequin","responsive",
+        "garment","clothing","editor","easier","usable","usability","workflow","mobile")
 ENGINEERING=("code","coding","backend","retry","retries","webhook","database",
              "api","bug","crash","latency","test","testing","performance","cache",
              "typescript","react","payment","security","server","architecture",
