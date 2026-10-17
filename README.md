@@ -2,6 +2,10 @@
 
 Canonical personal engineering rules: [AGENTS.md](AGENTS.md). **Reverse Engineering First** is the default for significant projects.
 
+## One-time setup on a new computer
+
+Clone this private repository and your personal project repositories into the same projects folder, then run `python3 bin/setup`. It identifies supported coding tools, previews safe project-scoped guidance, and asks once before installing. No global command permissions or employer repositories are changed. [New computer guide](docs/NEW-COMPUTER-SETUP.md).
+
 ## Easy everyday use
 
 Open your project in your AI coding assistant and describe the change in ordinary words. The existing project instructions provide the relevant context. For bigger design or engineering decisions, the assistant can compare approaches and cite public sources. No project IDs or command flags are needed from you.

@@ -48,3 +48,10 @@ Approved public references will now be checked twice a day instead of once a wee
 **Easier everyday questions**
 
 Personal projects can now get design or coding suggestions from a short question. The new helper checks which project is being worked on and explains different approaches in plain English.
+
+
+**A simpler start on a new computer**
+
+You can now set up your personal projects with one guided step after getting your code. It detects supported assistants, shows which projects it recognizes, and adds only the relevant guidance without replacing your existing instructions. You can review changes first, and restore the saved originals if you haven't edited them since setup.
+
+It does not connect account logins or touch workplace projects.
