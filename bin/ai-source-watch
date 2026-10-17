@@ -131,7 +131,16 @@ def main():
         catalog=json.loads(CATALOG.read_text(encoding="utf-8"))
         baseline=json.loads(BASELINE.read_text(encoding="utf-8"))
         items=validate(catalog,baseline)
-        result=evaluate(items,baseline,args.network,args.timeout)
+        if args.adopt_baseline:
+            if args.network or args.output:
+                raise ValueError("Baseline approval must be a separate explicit action")
+            accepted=adopt_reviewed_report(args.adopt_baseline,items,baseline)
+            BASELINE.write_text(json.dumps(accepted,indent=2)+"\n",encoding="utf-8")
+            result={"baseline_updated":True,
+                    "source_metadata_entries":len(accepted["sources"]),
+                    "rules_changed":False}
+        else:
+            result=evaluate(items,baseline,args.network,args.timeout)
         body=json.dumps(result,indent=2)+"\n"
         if args.output:
             # Only explicit output destination; never change active rules.
