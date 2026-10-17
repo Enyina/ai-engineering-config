@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+"""Draft evidence-backed rule lessons without changing active rules."""
+import argparse
+import hashlib
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+ID = re.compile(r"^[a-z][a-z0-9_-]{0,63}$")
+FORBIDDEN = re.compile(r"(?:ghp_|github_pat_|sk-proj-)[A-Za-z0-9_-]{12,}|-----BEGIN .*PRIVATE KEY-----|(?i:bearer)\s+[A-Za-z0-9_.-]{12,}")
+FIELDS = {"schema_version","project","title","observation","evidence","candidate_rule",
+          "scope","affected_projects","regression_test","privacy_review"}
+
+def fail(msg):
+    print("Lesson proposal refused: "+msg,file=sys.stderr)
+    sys.exit(2)
+
+def main():
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--event",required=True,type=Path,help="Locally reviewed sanitized JSON event")
+    p.add_argument("--policy-root",type=Path,default=ROOT/"policies"/"personal")
+    p.add_argument("--workspace",type=Path,required=True)
+    p.add_argument("--apply",action="store_true",help="Write a review proposal, never an active rule.")
+    args=p.parse_args()
+    if not args.event.is_file() or args.event.is_symlink() or args.event.stat().st_size>16384:
+        fail("Event file missing/unsafe")
+    try:
+        data=json.loads(args.event.read_text(encoding="utf-8"))
+        if not isinstance(data,dict) or set(data)!=FIELDS or data["schema_version"]!=1:
+            fail("Event schema mismatch")
+        for key in ("project","title","observation","evidence","candidate_rule","scope",
+                    "regression_test","privacy_review"):
+            if not isinstance(data[key],str) or not (1<=len(data[key])<=1200):
+                fail("Missing/invalid field: "+key)
+        if not ID.fullmatch(data["project"]) or data["scope"] not in {"global","category","project"}:
+            fail("Invalid project or scope")
+        if not isinstance(data["affected_projects"],list) or not all(ID.fullmatch(x) for x in data["affected_projects"]):
+            fail("Invalid affected project IDs")
+        if len(data["affected_projects"])!=len(set(data["affected_projects"])):
+            fail("Duplicate affected project")
+        if data["privacy_review"]!="sanitized_and_authorized":
+            fail("Explicit privacy review required before proposing")
+        body=json.dumps(data,sort_keys=True)
+        if FORBIDDEN.search(body):
+            fail("Possible credential or secret-like token")
+        policy=json.loads((args.policy_root/"policy.json").read_text())
+        if data["project"] not in policy["projects"] or any(x not in policy["projects"] for x in data["affected_projects"]):
+            fail("Cross-domain affected project")
+        # Reuse the engine's workspace classification, pack and Git-origin checks.
+        verified=subprocess.run([sys.executable,str(ROOT/"bin"/"ai-rules"),"resolve",
+             "--workspace",str(args.workspace),"--policy-root",str(args.policy_root),
+             "--project",data["project"]],capture_output=True,text=True,timeout=15)
+        if verified.returncode!=0:
+            fail("Workspace or repository authorization preflight failed")
+    except (OSError,ValueError,KeyError,subprocess.TimeoutExpired):
+        fail("Malformed or unavailable event, policy or workspace")
+    identifier=hashlib.sha256(body.encode("utf-8")).hexdigest()[:16]
+    result={"id":identifier,"status":"proposed_for_human_review",
+            "scope":data["scope"],"affected_projects":data["affected_projects"],
+            "active_rule_changed":False}
+    if args.apply:
+        path=args.policy_root/"proposals"/(identifier+".json")
+        if path.exists():
+            fail("Proposal already exists; review it rather than overwrite")
+        path.parent.mkdir(exist_ok=True)
+        path.write_text(json.dumps({"status":"proposed","event":data},
+                                    indent=2,sort_keys=True)+"\n")
+        result["written_to_policy_domain"]=True
+    else:
+        result["written_to_policy_domain"]=False
+    print(json.dumps(result,indent=2))
+
+if __name__=="__main__":
+    main()

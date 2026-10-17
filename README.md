@@ -12,6 +12,18 @@ Phase A: audit + secure current Mac rules; deterministic scope resolution; Codex
 
 Personal rule guidance and Codex command permissions are separate. We never store employer-specific rules or debugging commands in this repository, and we never auto-inject personal overlays into employer projects. Read [trust-domain architecture](docs/TRUST-DOMAINS.md); the new `bin/workspace-boundary.py` preflight is read-only, with fail-closed personal-operation decisions. **It is not yet integrated into the future `ai-rules` resolver.**
 
+## Working hierarchical rule engine (preview-first)
+
+Read [Hierarchy, connected systems and AI agent support](docs/HIERARCHY-AND-AGENTS.md). The `bin/ai-rules` CLI resolves an explicit organizational hierarchy with protected rules, shared system groups, project choices and feature preferences. It can generate native Codex/Antigravity `AGENTS.md`, Claude Code `CLAUDE.md`, Cursor `.mdc`, and generic AI guidance. It checks trust-domain declarations and Git origin, and refuses overwriting untracked agent files. `bin/ai-lessons` drafts only human-review proposals; `bin/ai-rules-sync-pr` opens opt-in GitHub PRs from a clean local checkout when `gh` authentication is available.
+
+```bash
+python3 bin/ai-rules validate
+python3 -m unittest discover -s tests -v
+# Run resolve/onboard with --workspace <authorized project repo> and --project <id>
+```
+
+Existing Moatt and portfolio `AGENTS.md` files are intentionally protected and require manual merging. Do not copy employer-owned policies into this personal repository or use the default personal pack in employer workspaces.
+
 ## Scoping
 - Global: `AGENTS.md` — stable standards.
 - Opt-in categories: `categories/` — web product, backend reliability, game development, AI media.

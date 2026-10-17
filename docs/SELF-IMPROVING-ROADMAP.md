@@ -1,6 +1,6 @@
 # Execution Plan — Self-Improving AI Engineering System
 
-**Status:** Approved planning baseline, implementation not completed.
+**Status:** Active implementation. Hierarchical rule resolver, five adapter outputs, safe local onboarding, learning proposals, research skill and CI are implemented; native-agent loading, Mac validation, production user acceptance, company opt-in and Godot device builds are still open.
 **Created:** 2026-10-17
 **Owner:** Personal engineering configuration (not a company-managed policy)
 **Track:** Phase A — milestones 1–6; Phase B — milestone 7.
@@ -28,7 +28,7 @@ An authorized new repository can be onboarded with a declared project category, 
 - User's revised Mac snapshot contains `config.safe.toml`, `rules/default.rules` and `manifest.json` (bundled `.system` skills excluded), with no user-level `AGENTS.md`. The user-provided contents showed historical `model=gpt-5.6-sol`, low reasoning effort and 104 `allow` command prefixes, including employer-specific/debugging commands. Their automatic activation/removal has **not** occurred. Historical approval/sandbox enforcement and a clean Mac test rerun still need verification; see `docs/COMMAND-PERMISSIONS-REVIEW.md`.
 - Legacy layout duplicates rule intent between root `AGENTS.md`, `rules/CORE-ENGINEERING.md`, `categories/` vs `rules/categories/`, and `projects/` vs `rules/projects/`. No automatic migration until inventory and golden tests protect intended behavior.
 - Moatt and portfolio reference templates exist. Their actual repo-level agent integrations and local behavior have **not** been independently validated in this milestone.
-- No deterministic rule engine, adapters, CI onboarding automation or usable Godot lab is verified as complete.
+- Deterministic rule resolver and Codex/Claude/Cursor/Antigravity/generic renderers now exist and are CI-tested; local PR sync requires `gh` authentication and owner's target-repo checkout. No live native-agent load verification or usable Godot lab is verified complete.
 
 ## Non-negotiable design constraints
 

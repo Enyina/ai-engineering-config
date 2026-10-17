@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "trust_domain": "personal",
+  "owner": "personal",
+  "rules": [
+    {
+      "id": "security.privacy",
+      "kind": "required",
+      "text": "Do not copy credentials, customer information, employer instructions or confidential data into personal repositories, prompts, logs or learning artifacts."
+    },
+    {
+      "id": "security.access",
+      "kind": "required",
+      "text": "Use only explicitly authorized repositories, services and connected systems. Never bypass access controls, licensing, DRM or anti-cheat."
+    },
+    {
+      "id": "security.approvals",
+      "kind": "required",
+      "text": "Never treat agent instructions as OS permissions; require appropriate authorization for push, deploy, deletion, migrations and external side effects."
+    },
+    {
+      "id": "quality.evidence",
+      "kind": "required",
+      "text": "Report accurately which files were changed, which tests were actually executed, and what remains unverified. Do not claim deploy or browser success without evidence."
+    },
+    {
+      "id": "quality.regressions",
+      "kind": "guidance",
+      "text": "Inspect existing implementation and critical failure modes; add focused regression checks and verify behavior at the integration boundary."
+    },
+    {
+      "id": "research.reverse-first",
+      "kind": "guidance",
+      "text": "For substantial features, inspect existing code and proven lawful reference products, compare evidence and tradeoffs, then independently implement and measure."
+    },
+    {
+      "id": "web.product",
+      "kind": "guidance",
+      "text": "Prioritize task completion, responsive UX, accessible interaction, and loading, empty and error states."
+    },
+    {
+      "id": "web.admin",
+      "kind": "guidance",
+      "text": "Keep editing routes authenticated and authorized server-side; public visitors retain read-only access."
+    },
+    {
+      "id": "editor.pointer",
+      "kind": "guidance",
+      "text": "Explicitly separate drawing, selecting, orbiting and editing gestures. Verify independent front and back surfaces and save/reopen fidelity."
+    },
+    {
+      "id": "editor.claims",
+      "kind": "required",
+      "text": "Do not represent approximate garment previews as validated fit, tailoring patterns or production-ready measurements."
+    },
+    {
+      "id": "game.frame",
+      "kind": "guidance",
+      "text": "Prefer a playable original vertical slice, deterministic mechanics, input responsiveness, frame-time measurements, and controller tests."
+    },
+    {
+      "id": "game.original",
+      "kind": "required",
+      "text": "Use original or properly licensed game assets and independent implementations; do not evade anti-cheat or redistribute ripped content."
+    },
+    {
+      "id": "crosssystem.contracts",
+      "kind": "guidance",
+      "text": "When multiple repositories form a connected system, document API contracts, versioned data ownership, integration tests and compatible rollouts."
+    }
+  ],
+  "global": {
+    "rules": [
+      "security.privacy",
+      "security.access",
+      "security.approvals",
+      "quality.evidence",
+      "quality.regressions",
+      "research.reverse-first"
+    ],
+    "preferences": {
+      "change_scope": "Small reversible changes; review adjacent contracts."
+    }
+  },
+  "organizations": {
+    "personal": {
+      "rules": [],
+      "preferences": {
+        "communication": "Brief outcome, evidence, risks, and next actions."
+      }
+    }
+  },
+  "categories": {
+    "web-product": {
+      "rules": [
+        "web.product"
+      ],
+      "preferences": {
+        "test_focus": "Responsive, accessibility and browser flows."
+      }
+    },
+    "three-d-editor": {
+      "rules": [
+        "editor.pointer",
+        "editor.claims"
+      ],
+      "preferences": {}
+    },
+    "games": {
+      "rules": [
+        "game.original",
+        "game.frame"
+      ],
+      "preferences": {
+        "test_focus": "Fixed-step simulation, controller and performance."
+      }
+    }
+  },
+  "systems": {
+    "web-foundation": {
+      "organization": "personal",
+      "parents": [],
+      "rules": [],
+      "preferences": {
+        "interface_style": "Reuse coherent product UX patterns."
+      }
+    },
+    "garment-workbench": {
+      "organization": "personal",
+      "parents": [
+        "web-foundation"
+      ],
+      "rules": [
+        "crosssystem.contracts"
+      ],
+      "preferences": {
+        "rendering": "Maintain a canonical garment design document."
+      }
+    },
+    "game-ecosystem": {
+      "organization": "personal",
+      "parents": [],
+      "rules": [
+        "crosssystem.contracts"
+      ],
+      "preferences": {}
+    }
+  },
+  "projects": {
+    "moatt": {
+      "organization": "personal",
+      "repository": "Enyina/moatt",
+      "systems": [
+        "garment-workbench"
+      ],
+      "categories": [
+        "web-product",
+        "three-d-editor"
+      ],
+      "rules": [],
+      "preferences": {
+        "test_focus": "Verify draw/orbit conflict, save/reload and mockup accuracy."
+      },
+      "features": {
+        "garment-editor": {
+          "rules": [],
+          "preferences": {
+            "interaction_mode": "Only one active pointer action per gesture."
+          }
+        }
+      }
+    },
+    "portfolio": {
+      "organization": "personal",
+      "repository": "Enyina/newPortfolio",
+      "systems": [
+        "web-foundation"
+      ],
+      "categories": [
+        "web-product"
+      ],
+      "rules": [
+        "web.admin"
+      ],
+      "preferences": {
+        "test_focus": "Public pages, admin authorization and responsive visual fidelity."
+      },
+      "features": {
+        "admin-dashboard": {
+          "rules": [],
+          "preferences": {
+            "access_control": "Only designated authorized user can publish or edit."
+          }
+        }
+      }
+    },
+    "gaming": {
+      "organization": "personal",
+      "repository": "Enyina/game-reverse-engineering-lab",
+      "systems": [
+        "game-ecosystem"
+      ],
+      "categories": [
+        "games"
+      ],
+      "rules": [],
+      "preferences": {},
+      "features": {
+        "time-arena": {
+          "rules": [],
+          "preferences": {
+            "gameplay": "Short original time-manipulation combat vertical slice."
+          }
+        }
+      }
+    }
+  }
+}

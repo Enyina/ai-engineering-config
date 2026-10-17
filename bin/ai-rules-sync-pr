@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+"""Opt-in project rules synchronization through a reviewable GitHub PR.
+
+Requires user's local git and gh authentication, remote write rights and clean
+checkout. Never runs automatically, overwrites unmanaged instructions, or
+touches non-personal employer workspaces from this personal repo.
+"""
+import argparse
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT=Path(__file__).resolve().parents[1]
+BRANCH=re.compile(r"^[a-z][a-z0-9-]{1,63}$")
+
+def run(argv,cwd,check=True):
+    result=subprocess.run(argv,cwd=cwd,capture_output=True,text=True,timeout=45)
+    if check and result.returncode:
+        raise RuntimeError("Local git/GitHub operation failed: " + argv[0])
+    return result
+
+def main():
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--workspace",required=True,type=Path)
+    p.add_argument("--project",required=True)
+    p.add_argument("--feature")
+    p.add_argument("--policy-root",type=Path,default=ROOT/"policies"/"personal")
+    p.add_argument("--branch",default="ai-rules/review-sync")
+    p.add_argument("--apply",action="store_true")
+    a=p.parse_args()
+    try:
+        workspace=a.workspace.resolve(strict=True)
+        pack=json.loads((a.policy_root/"policy.json").read_text())
+        if pack.get("trust_domain")!="personal":
+            raise ValueError("Employer packs require an employer-owned orchestration workflow")
+        if not re.fullmatch(r"ai-rules/[a-z0-9-]{2,64}",a.branch):
+            raise ValueError("Branch must be named ai-rules/<slug>")
+        clean=run(["git","status","--porcelain"],workspace)
+        if clean.stdout.strip():
+            raise ValueError("Workspace must be clean before starting PR workflow")
+        branch=run(["git","branch","--show-current"],workspace).stdout.strip()
+        if not branch or branch.startswith("ai-rules/"):
+            raise ValueError("Start from a clean standard branch")
+        preview=run([sys.executable,str(ROOT/"bin"/"ai-rules"),"onboard",
+                     "--workspace",str(workspace),"--policy-root",str(a.policy_root),
+                     "--project",a.project]+(["--feature",a.feature] if a.feature else []),
+                    workspace,check=False)
+        if preview.returncode:
+            raise ValueError("Rules preflight or safe overwrite check failed")
+        planned=json.loads(preview.stdout)["actions"]
+        paths=[x["path"] for x in planned]+[".ai-rules/generated.json"]
+        if not a.apply:
+            print(json.dumps({"applied":False,"branch":a.branch,
+                              "reviewable_paths":paths,"external_write":False},indent=2))
+            return 0
+        exists=run(["git","show-ref","--verify","--quiet","refs/heads/"+a.branch],
+                   workspace,check=False)
+        if exists.returncode==0:
+            raise ValueError("Proposed branch already exists")
+        run(["git","switch","-c",a.branch],workspace)
+        changed=run([sys.executable,str(ROOT/"bin"/"ai-rules"),"onboard",
+                     "--workspace",str(workspace),"--policy-root",str(a.policy_root),
+                     "--project",a.project,"--apply"]+
+                    (["--feature",a.feature] if a.feature else []),
+                    workspace,check=False)
+        if changed.returncode:
+            raise ValueError("Generation failed; inspect and recover local branch manually")
+        run(["git","add","--",*paths],workspace)
+        staged=run(["git","diff","--cached","--name-only"],workspace).stdout.splitlines()
+        if not staged:
+            print(json.dumps({"applied":False,"note":"No changes to propose"}))
+            return 0
+        if not set(staged).issubset(set(paths)):
+            raise ValueError("Unexpected staged path")
+        run(["git","diff","--cached","--check"],workspace)
+        run(["git","commit","-m","chore(ai-rules): review project instruction update"],workspace)
+        run(["git","push","-u","origin",a.branch],workspace)
+        pr=run(["gh","pr","create","--base",branch,"--head",a.branch,
+                "--title","Review generated AI engineering instructions",
+                "--body","Generated project instructions from an explicit personal-policy pack. Review ownership, scope, file diff, tests and security before merge. No automatic merge."],
+               workspace)
+        print(json.dumps({"applied":True,"pr_created":True,"url":pr.stdout.strip(),
+                          "reviewable_paths":paths},indent=2))
+        return 0
+    except (OSError,ValueError,RuntimeError,subprocess.TimeoutExpired,KeyError,
+            json.JSONDecodeError) as exc:
+        print("Sync PR refused: "+str(exc),file=sys.stderr)
+        return 2
+
+if __name__=="__main__":
+    sys.exit(main())

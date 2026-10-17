@@ -1,6 +1,6 @@
 # Employer and Personal Workspace Isolation
 
-**Design status:** binding architectural policy for this personal AI-engineering repository. The preflight script is implemented, but integration with the future `ai-rules` resolver/onboard/sync is **not yet complete**. This document is not a technical guarantee that existing Codex sessions are isolated.
+**Design status:** binding architectural policy for this personal AI-engineering repository. A read-only preflight and deterministic `bin/ai-rules` resolver/onboard/sync CLI are implemented with additional trust-domain, Git-origin and policy-pack checks. Native agent behavior and external GitHub authorization must still be validated. This document is not a technical guarantee that existing Codex sessions are isolated.
 
 ## Three different types of "rules"
 
@@ -35,7 +35,7 @@ For work repositories, use the employer's own `AGENTS.md`, `CLAUDE.md`, `.cursor
 - **Workspaces:** separate personal and each employer's repositories and agent sessions, ideally with separate OS users/managed devices when required by employer policy. Where supported, separate agent home/config profiles and connected tools, plus dedicated Git credentials and environment variables. A folder name is not isolation.
 - **Storage:** no credentials, raw company scripts, customer records, internal URLs or authentication data in personal snapshots or Git history. Employer-controlled instructions stay in employer-approved repositories.
 - **Cross-border learning:** only a general principle that you have the right to reuse may be proposed for shared scope, with sensitive details removed, provenance and review; no direct cross-company copying of code, instructions, models or private assets.
-- **Automation:** future `ai-rules resolve/render/onboard/sync` MUST call the workspace boundary check and refuse unclassified or employer operations in personal mode. Require opt-in, PRs and authorization even in personal projects. This is a required integration gate, **not yet enforced by the unbuilt resolver**.
+- **Automation:** `ai-rules resolve/render/onboard/sync` now implement equivalent trust-domain checks directly: exactly one marker, package-owner matching, and Git origin matching. Personal policy packs refuse employer/unknown workspaces; employer policy packs live outside the personal repo. The separate preflight remains a minimal read-only check, not a grant of authority. Require opt-in, PRs and authorization even in personal projects. This is enforced by the CLI's existing scope checks but does **not** replace host/organization security controls.
 - **Offboarding:** reset only personally managed files on a device you are authorized to administer. Never erase employer policy or credentials through the personal cleanup tool; follow organization offboarding procedures.
 
 ## Optional local-only workspace declaration (non-secret)
@@ -73,4 +73,4 @@ The second command returns exit status 2 if the repo is unclassified, employer-o
 - Attempts to bypass the check via project name, local file path, symlink, manual manifest edit, or cross-owner remote are covered by tests and authorization checks.
 - The actual Codex, Claude Code and Cursor behavior is separately checked; text policy is not a substitute for tool access controls.
 
-**Priority:** add this trust-domain boundary as an explicit M2 prerequisite and an M6 onboarding release gate.
+**Implementation:** scope checks are now covered by synthetic M2/M6 regression tests. Owner-side and native agent integration verification remain open.
