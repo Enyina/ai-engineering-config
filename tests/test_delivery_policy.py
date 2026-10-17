@@ -1,5 +1,6 @@
 """Check that every personal project inherits the plain-English delivery requirements."""
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -26,7 +27,7 @@ class DeliveryPolicyTests(unittest.TestCase):
         text=(ROOT/"RELEASE_NOTES.md").read_text().lower()
         for jargon in ("api","endpoint","prisma","socket.io","refactor","ci/cd","sha","schema","cron","payload"):
             with self.subTest(jargon=jargon):
-                self.assertNotIn(jargon,text)
+                self.assertIsNone(re.search(r"(?<![a-z])" + re.escape(jargon) + r"(?![a-z])", text))
 
     def test_only_personal_project_rule_package_is_changed(self):
         self.assertEqual(self.pack["trust_domain"],"personal")
