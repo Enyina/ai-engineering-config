@@ -84,3 +84,12 @@ Tradeoffs: A smaller curated portfolio is easier to assess but can omit breadth;
 Evidence: `Enyina/newPortfolio` on 2026-10-17; the owner's 2026-10-05 CV (not copied here); https://docs.github.com/en/account-and-profile/tutorials/using-your-github-profile-to-enhance-your-resume.
 Detailed candidate and verification: [portfolio-evidence-review-2026-10-17.md](../learning/portfolio-evidence-review-2026-10-17.md).
 Promotion: Requires owner review, a checked source ledger, tests and actual visitor journey observations. No company data or private code should be transferred into this repository.
+
+
+## 2026-10-17 — Portfolio configuration must control the real interface
+Scope: personal web-product, candidate shared design/quality insight
+Status: **observed and unit-tested in portfolio; browser/production review pending**
+Observed: The earlier public page hard-coded an order and list of visible sections even though it stored a section order and visibility configuration. An archived project selector was necessary to keep earlier routes working after curation.
+Candidate rule: When adding editable visibility/order state, test the actual render path and navigation, not just data selectors. Treat hiding from the landing page separately from unpublishing a route; preserve old links deliberately or redirect them. Match public professional claims to dated evidence, label prototypes honestly, and obtain approval for content removals.
+Verification: GitHub Actions tests on Enyina/newPortfolio main passed for live section selector wiring, featured/archive projections and all legacy slug routes. This does **not** verify Netlify deployment or browser UX.
+Source: Enyina/newPortfolio docs/CAREER_EVIDENCE_LEDGER.md and tests/public-portfolio.test.mjs; personal candidate learning/portfolio-evidence-review-2026-10-17.md.
