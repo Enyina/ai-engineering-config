@@ -41,3 +41,18 @@ Observed: Moatt's initial flat rectangular 3D placeholder lacked a recognizable 
 Rule candidate: In visual configuration products, label the accuracy tier of every representation (conceptual mockup, visual approximation, calibrated manufacturing output). Never treat successful smoke tests or successful WebGL rendering as proof of real-world fidelity.
 Verification needed before promotion: side-by-side screenshot reviews and measurements against calibrated outputs, plus memory/performance tests.
 Reference: Enyina/moatt commit 1871598b, CI 39026492744.
+
+## 2026-10-17 — Preserve backward compatibility in editable design schemas
+Scope: shared/core + 3D editor category
+Status: validated by Moatt versioned-document unit tests
+Observed: Moatt added optional hem, sleeve and neck editing fields while existing saved v2 designs lacked those properties.
+Rule: When extending a persisted project/document schema, supply deterministic defaults or migrations, and test round-trip serialization plus restoration of older versions before relying on the new fields in rendering.
+Verification: Tests in Moatt's `tests/document.test.ts` and successful CI run 39026997451.
+Reference: Moatt commit a2434262 and follow-up renderer/UI commits.
+
+## 2026-10-17 — Asset acquisition must be independently verified
+Scope: shared/core
+Status: proposed
+Observed: Publicly described CC0 3D mannequin assets were discoverable, but the connected repository interface could not retrieve/write binary GLB content. A license statement and download listing are not equivalent to an installed, verified asset.
+Rule: Before claiming a third-party asset integration, verify permission/license, exact asset bytes/provenance, stable bundling, runtime loading, orientation/scale and fallback behavior. Record blockers explicitly; never substitute a live third-party CDN dependency without reliability and licensing review.
+Verification: imported binary exists in the release tree and automated loading/visual smoke checks pass.
