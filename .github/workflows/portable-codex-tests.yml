@@ -1,0 +1,31 @@
+name: Portable Codex safety tests
+
+on:
+  pull_request:
+    paths:
+      - "bin/codex-portable.py"
+      - "tests/**"
+      - ".github/workflows/portable-codex-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "bin/codex-portable.py"
+      - "tests/**"
+      - ".github/workflows/portable-codex-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python version
+        run: python3 --version
+      - name: Compile safety tooling
+        run: python3 -m compileall -q bin tests
+      - name: Run isolated unit tests
+        run: python3 -m unittest discover -s tests -v
