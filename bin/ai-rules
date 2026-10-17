@@ -1,0 +1,357 @@
+#!/usr/bin/env python3
+"""Deterministic, domain-isolated hierarchical AI rule resolver. Python 3.9+.
+
+The policy package defines rules; organizations, connected systems, projects and
+features select them. Inspect/resolve/render are dry-run by default. Never
+uploads a policy package or any workspace content.
+"""
+import argparse
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parents[1]
+ID = re.compile(r"^[a-z][a-z0-9_-]{0,63}$")
+RULE_ID = re.compile(r"^[a-z][a-z0-9_.-]{0,90}$")
+SHA = re.compile(r"^[0-9a-f]{64}$")
+MAX = 256_000
+AGENTS = ("codex", "claude", "cursor", "antigravity", "generic")
+MANAGED = {
+    "codex": "AGENTS.md",
+    "antigravity": "AGENTS.md", # Antigravity discovers AGENTS.md; no duplicate GEMINI.md.
+    "claude": "CLAUDE.md",
+    "cursor": ".cursor/rules/ai-engineering-managed.mdc",
+    "generic": ".ai-rules/INSTRUCTIONS.md",
+}
+RECEIPT = ".ai-rules/generated.json"
+
+class PolicyError(Exception):
+    pass
+
+def require(ok, message):
+    if not ok:
+        raise PolicyError(message)
+
+def read_json(path):
+    require(path.is_file() and not path.is_symlink() and path.stat().st_size <= MAX,
+            "Missing, oversized or symlinked JSON configuration")
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (ValueError, UnicodeError) as exc:
+        raise PolicyError("Invalid JSON configuration") from exc
+
+def safe_id(value):
+    return isinstance(value, str) and bool(ID.fullmatch(value))
+
+def safe_rules(node, known, label):
+    require(isinstance(node, dict), "Invalid policy layer: " + label)
+    require(set(node) <= {"rules", "preferences", "parents", "organization", "repository",
+                         "systems", "categories", "features"}, "Unknown fields: " + label)
+    rules = node.get("rules", [])
+    require(isinstance(rules, list) and all(isinstance(r, str) and r in known for r in rules)
+            and len(rules) == len(set(rules)), "Unknown/duplicate rules: " + label)
+    prefs = node.get("preferences", {})
+    require(isinstance(prefs, dict) and all(safe_id(k) and isinstance(v, str)
+            and 0 < len(v) <= 500 and "\n" not in v and "\r" not in v
+            for k,v in prefs.items()), "Invalid preference: " + label)
+    return rules, prefs
+
+def load_pack(root):
+    root = root.resolve()
+    pack = read_json(root / "policy.json")
+    require(isinstance(pack, dict) and set(pack) ==
+            {"schema_version", "trust_domain", "owner", "rules", "global",
+             "organizations", "categories", "systems", "projects"}, "Unsupported policy schema")
+    require(pack["schema_version"] == 1 and pack["trust_domain"] in ("personal", "employer"),
+            "Unsupported policy version/domain")
+    require(safe_id(pack["owner"]), "Invalid policy owner")
+    require(pack["owner"] == "personal" if pack["trust_domain"] == "personal"
+            else pack["owner"] != "personal", "Domain/owner mismatch")
+    # Employer policies must be stored outside this personally owned configuration repo.
+    if pack["trust_domain"] == "employer":
+        require(root != HERE and HERE not in root.parents,
+                "Employer policy packages cannot be stored in personal config repository")
+    require(isinstance(pack["rules"], list), "Invalid registry")
+    known = {}
+    for item in pack["rules"]:
+        require(isinstance(item, dict) and set(item) == {"id", "kind", "text"},
+                "Invalid rule metadata")
+        key = item["id"]
+        require(isinstance(key, str) and RULE_ID.fullmatch(key) and key not in known,
+                "Invalid or repeated rule ID")
+        require(item["kind"] in ("required", "guidance") and isinstance(item["text"], str)
+                and 1 <= len(item["text"]) <= 2000, "Invalid rule definition")
+        known[key] = item
+    for section in ("organizations", "categories", "systems", "projects"):
+        require(isinstance(pack[section], dict) and
+                all(safe_id(key) for key in pack[section]), "Invalid " + section + " names")
+    safe_rules(pack["global"], known, "global")
+    for key, node in pack["organizations"].items():
+        safe_rules(node, known, "organization:" + key)
+        require(set(node) <= {"rules", "preferences"}, "Invalid organization fields")
+    require(pack["owner"] in pack["organizations"],
+            "Pack owner must have an organization policy")
+    for key, node in pack["categories"].items():
+        safe_rules(node, known, "category:" + key)
+        require(set(node) <= {"rules", "preferences"}, "Invalid category fields")
+    for key, node in pack["systems"].items():
+        safe_rules(node, known, "system:" + key)
+        require(set(node) <= {"organization", "parents", "rules", "preferences"},
+                "Invalid connected system fields")
+        require(node.get("organization") == pack["owner"], "Cross-owner connected system")
+        parents = node.get("parents", [])
+        require(isinstance(parents, list) and len(parents) == len(set(parents))
+                and all(p in pack["systems"] and p != key for p in parents),
+                "Invalid parent systems")
+    for key, node in pack["projects"].items():
+        safe_rules(node, known, "project:" + key)
+        require(set(node) <= {"organization", "repository", "systems", "categories",
+                               "rules", "preferences", "features"}, "Invalid project fields")
+        require(node.get("organization") == pack["owner"], "Cross-owner project")
+        repo = node.get("repository")
+        require(isinstance(repo, str) and re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+",repo),
+                "Project must declare full repository ownership")
+        for group, section in [("systems", "systems"), ("categories", "categories")]:
+            val = node.get(group, [])
+            require(isinstance(val, list) and len(val) == len(set(val))
+                    and all(v in pack[section] for v in val), "Unknown or duplicate " + group)
+        feats = node.get("features", {})
+        require(isinstance(feats, dict) and all(safe_id(x) for x in feats), "Invalid feature names")
+        for fid, child in feats.items():
+            safe_rules(child, known, "feature:" + fid)
+            require(set(child) <= {"rules", "preferences"}, "Invalid feature fields")
+    # Resolve every system now to catch cycles, even if not currently selected.
+    for sid in pack["systems"]:
+        system_order(pack, [sid])
+    return pack, known
+
+def system_order(pack, ids):
+    sequence, visited, active = [], set(), set()
+    def walk(sid):
+        require(sid not in active, "Connected system inheritance cycle")
+        if sid in visited:
+            return
+        active.add(sid)
+        for p in pack["systems"][sid].get("parents", []):
+            walk(p)
+        active.remove(sid)
+        visited.add(sid)
+        sequence.append(sid)
+    for sid in ids:
+        walk(sid)
+    return sequence
+
+def check_workspace(workspace, pack, project):
+    require(workspace.is_dir() and not workspace.is_symlink(), "Workspace not a directory")
+    rules_dir = workspace / ".ai-rules"
+    require(not rules_dir.is_symlink(), "Unsafe workspace marker directory")
+    marker = rules_dir / "workspace.json"
+    alt = rules_dir / "workspace.local.json"
+    require(marker.exists() != alt.exists(), "Exactly one trust-domain marker required")
+    data = read_json(marker if marker.exists() else alt)
+    require(isinstance(data, dict) and data ==
+            {"schema_version":1, "trust_domain":pack["trust_domain"],
+             "policy_owner":"personal" if pack["trust_domain"] == "personal" else "organization"},
+            "Workspace trust domain does not match policy package")
+    try:
+        remote = subprocess.run(["git", "-C", str(workspace), "remote", "get-url", "origin"],
+                                capture_output=True, text=True, timeout=5, check=False)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise PolicyError("Cannot validate local git remote") from exc
+    require(remote.returncode == 0, "Project has no verifiable origin remote")
+    url = remote.stdout.strip()
+    # Local remote assertions only; push/PR also requires external GitHub permissions.
+    match = re.fullmatch(r"(?:https://github\.com/|git@github\.com:)([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?/?", url)
+    require(match is not None, "Unsupported GitHub origin; must classify manually")
+    require(match.group(1).lower() == project["repository"].lower(),
+            "Repository mismatch: refusing cross-workspace rule selection")
+
+def assemble(pack, known, project_id, feature=None):
+    require(project_id in pack["projects"], "Unknown project")
+    project = pack["projects"][project_id]
+    if feature is not None:
+        require(feature in project.get("features", {}), "Unknown project feature")
+    # Layer order: global < organization < categories < connected systems < project < feature.
+    layers = [("global", pack["global"]),
+              ("organization/" + pack["owner"], pack["organizations"][pack["owner"]])]
+    layers += [("category/" + cid, pack["categories"][cid])
+               for cid in project.get("categories", [])]
+    layers += [("system/" + sid, pack["systems"][sid])
+               for sid in system_order(pack, project.get("systems", []))]
+    layers += [("project/" + project_id, project)]
+    if feature:
+        layers.append(("feature/" + feature, project["features"][feature]))
+    selected, decisions = [], []
+    prefs = {}
+    for layer, node in layers:
+        for rid in node.get("rules", []):
+            if rid not in selected:
+                selected.append(rid)
+                decisions.append({"kind":"rule", "id":rid, "source":layer,
+                                  "importance":known[rid]["kind"]})
+        for k, value in sorted(node.get("preferences", {}).items()):
+            previous = prefs.get(k)
+            if previous and previous["source"].startswith("system/") and layer.startswith("system/") and previous["value"] != value:
+                # Sibling systems can disagree only if project explicitly resolves it.
+                if k not in project.get("preferences", {}):
+                    raise PolicyError("Conflicting connected-system preference: " + k)
+            prefs[k] = {"value":value, "source":layer}
+            decisions.append({"kind":"preference", "id":k, "value":value, "source":layer,
+                              "overrides":previous["source"] if previous else None})
+    result = {"schema_version":1, "trust_domain":pack["trust_domain"],
+              "owner":pack["owner"], "project":project_id, "repository":project["repository"],
+              "feature":feature, "layers":[x[0] for x in layers],
+              "required":[{"id":x,"text":known[x]["text"]}
+                          for x in selected if known[x]["kind"] == "required"],
+              "guidance":[{"id":x,"text":known[x]["text"]}
+                          for x in selected if known[x]["kind"] == "guidance"],
+              "preferences":prefs, "trace":decisions}
+    return result
+
+def markdown(resolved):
+    body = [
+        "# Effective AI engineering rules",
+        "",
+        "Generated from explicit policy hierarchy. Do not edit this file directly.",
+        "Trust domain: " + resolved["trust_domain"] + "; policy owner: " + resolved["owner"],
+        "Project: " + resolved["project"] + "; feature: " + (resolved["feature"] or "default"),
+        "Applied layers: " + " → ".join(resolved["layers"]),
+        "",
+        "## Mandatory requirements",
+    ]
+    body += ["- **" + x["id"] + "**: " + x["text"] for x in resolved["required"]]
+    body += ["", "## Engineering guidance"]
+    body += ["- **" + x["id"] + "**: " + x["text"] for x in resolved["guidance"]]
+    body += ["", "## Effective preferences (most specific explicit value wins)"]
+    body += ["- **" + key + "**: " + x["value"] + " (from " + x["source"] + ")"
+             for key, x in sorted(resolved["preferences"].items())]
+    body += ["", "Organizational/platform safety policies remain authoritative.",
+             "This is instruction text, not a permission-granting command policy.", ""]
+    return "\n".join(body)
+
+def rendered(resolved, agents):
+    content = markdown(resolved)
+    results = {}
+    for agent in agents:
+        path = MANAGED[agent]
+        if path in results:
+            continue
+        if agent == "cursor":
+            escaped = content.replace("---", "—")
+            results[path] = ("---\ndescription: Managed rules for this project\nalwaysApply: true\n---\n\n" + escaped)
+        else:
+            results[path] = content
+    return results
+
+def sha(value):
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+def destination(workspace, name):
+    require(name in set(MANAGED.values()) or name == RECEIPT,
+            "Unmanaged output path")
+    root = workspace.resolve()
+    node = workspace
+    for part in Path(name).parts:
+        node = node / part
+        require(not node.is_symlink(), "Refusing symlinked managed output path")
+    require(root == node.resolve() or root in node.resolve().parents,
+            "Output would leave repository")
+    return node
+
+def plan_or_apply(workspace, outputs, apply=False):
+    receipt_file = destination(workspace, RECEIPT)
+    previous = read_json(receipt_file) if receipt_file.exists() else {"files":{}}
+    require(isinstance(previous, dict) and isinstance(previous.get("files"), dict),
+            "Invalid generated-file receipt")
+    actions = []
+    for name, body in outputs.items():
+        target = destination(workspace, name)
+        expected = previous["files"].get(name)
+        if target.exists():
+            require(target.is_file(), "Managed path is not a file")
+            actual = sha(target.read_text(encoding="utf-8"))
+            require(expected == actual or body == target.read_text(encoding="utf-8"),
+                    "Unmanaged or user-modified file exists: " + name)
+        actions.append({"path":name,"action":"update" if target.exists() else "create",
+                        "sha256":sha(body)})
+    if not apply:
+        return {"applied":False,"actions":actions}
+    # Refuse any unsafe path BEFORE writing.
+    for item in actions:
+        destination(workspace, item["path"])
+    for name, body in outputs.items():
+        target = destination(workspace, name)
+        target.parent.mkdir(parents=True,exist_ok=True)
+        tmp = target.parent / (target.name + ".ai-rules-tmp")
+        require(not tmp.exists() and not tmp.is_symlink(), "Temporary path exists")
+        try:
+            tmp.write_text(body,encoding="utf-8")
+            os.replace(tmp,target)
+        finally:
+            if tmp.exists():
+                tmp.unlink()
+    updated = dict(previous["files"])
+    updated.update({name:sha(body) for name,body in outputs.items()})
+    receipt_file.parent.mkdir(parents=True,exist_ok=True)
+    receipt_file.write_text(json.dumps({"schema_version":1,"files":updated},
+                                      indent=2,sort_keys=True)+"\n",encoding="utf-8")
+    return {"applied":True,"actions":actions}
+
+def make_parser():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("command",choices=["validate","resolve","explain","render","sync","onboard"])
+    parser.add_argument("--policy-root",type=Path,default=HERE/"policies"/"personal")
+    parser.add_argument("--workspace",type=Path,default=Path.cwd())
+    parser.add_argument("--project")
+    parser.add_argument("--feature")
+    parser.add_argument("--agent",choices=AGENTS+("all",),default="all")
+    parser.add_argument("--apply",action="store_true",
+                        help="Explicitly write generated files; preview is default.")
+    parser.add_argument("--json",action="store_true")
+    return parser
+
+def main():
+    args = make_parser().parse_args()
+    try:
+        pack, known = load_pack(args.policy_root)
+        if args.command == "validate":
+            result = {"valid":True,"domain":pack["trust_domain"],
+                      "owner":pack["owner"],"projects":sorted(pack["projects"]),
+                      "systems":sorted(pack["systems"]),"rules":len(known)}
+        else:
+            require(args.project is not None,"--project is required")
+            require(not args.apply or args.command in ("onboard","render","sync"),
+                    "--apply is not valid for read-only commands")
+            check_workspace(args.workspace,pack,pack["projects"].get(args.project,{}))
+            effective = assemble(pack,known,args.project,args.feature)
+            agents = AGENTS if args.agent == "all" else (args.agent,)
+            outputs = rendered(effective,agents)
+            if args.command == "resolve":
+                result = {k:v for k,v in effective.items() if k != "trace"}
+            elif args.command == "explain":
+                result = {"layers":effective["layers"], "trace":effective["trace"]}
+            elif args.command == "sync" and not args.apply:
+                receipt = args.workspace / RECEIPT
+                previous = read_json(receipt).get("files",{}) if receipt.exists() else {}
+                result = {"in_sync":all((args.workspace/name).is_file() and
+                          sha((args.workspace/name).read_text(encoding="utf-8"))==sha(body)
+                          and previous.get(name)==sha(body) for name,body in outputs.items()),
+                          "expected_files":sorted(outputs)}
+            else:
+                result = plan_or_apply(args.workspace,outputs,args.apply)
+                result["agents"] = list(agents)
+        print(json.dumps(result,indent=2,sort_keys=True))
+        if args.command == "sync" and result.get("in_sync") is False:
+            return 1
+        return 0
+    except (PolicyError, OSError, UnicodeError) as exc:
+        # Do not echo raw policy data, command contents, credentials or paths.
+        print("Rule operation denied: " + str(exc),file=sys.stderr)
+        return 2
+
+if __name__ == "__main__":
+    sys.exit(main())
