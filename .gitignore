@@ -1,0 +1,20 @@
+.DS_Store
+__pycache__/
+*.pyc
+.capture-*/
+snapshot.previous-*/
+*.log
+# Never include raw local reports or credentials
+codex-audit.local.json
+**/.env
+**/.env.*
+**/auth.json
+**/credentials.json
+**/config.toml
+!**/config.safe.toml
+**/*.pem
+**/*.key
+**/id_rsa
+**/id_ed25519
+**/history.jsonl
+**/sessions/**
