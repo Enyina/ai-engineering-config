@@ -5,7 +5,7 @@ description: Research authoritative UX/UI evidence and compare tailored visual, 
 
 # Evidence-led UX/UI design
 
-1. Confirm this is a personal or otherwise authorized workspace. Never import one employer's design system into another or a personal repo.
+1. Identify the trust domain and ownership first. For personal work, resolve active personal project rules. For authorized employer work, **suggest** evidence-backed public patterns and general reusable personal lessons, explicitly marking where each came from; company design policy and access controls still take precedence. No copying another employer's design system, company assets or Moatt-specific preferences into company rules. Use the read-only `--advisory-for-employer` mode with a non-confidential task when no company pack exists.
 2. Read the product's existing design system, user flows, sketches and actual screens. Preserve identity where it is working. Use a credible **public** evidence source only for the relevant problem, not to copy branding, Figma files or restricted assets.
 3. Look up `knowledge/sources/catalog.json`; for alternatives run `python3 bin/ai-intelligence suggest --workspace <repo> --project <id> --domain design --task "<specific design challenge>"` from the canonical config repo.
 4. Compare 2–3 genuinely different viable patterns for substantial decisions: first-use task clarity, visual hierarchy, navigation, status and errors, responsive/touch behavior, accessibility and emotional fit. For trivial changes, use the existing component consistently and move on.
