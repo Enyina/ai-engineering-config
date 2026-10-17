@@ -98,8 +98,7 @@
     {
       "id": "source-to-design-insight",
       "inputs": [
-        "website_url",
-        "research"
+        "verified_design_source"
       ],
       "outputs": [
         "design_insight"
@@ -113,8 +112,7 @@
     {
       "id": "design-to-options",
       "inputs": [
-        "design_brief",
-        "concept"
+        "design_brief"
       ],
       "outputs": [
         "design_options"
@@ -156,9 +154,7 @@
     {
       "id": "source-to-engineering-insight",
       "inputs": [
-        "website_url",
-        "repository_url",
-        "research"
+        "verified_engineering_source"
       ],
       "outputs": [
         "engineering_insight"
