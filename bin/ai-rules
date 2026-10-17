@@ -146,29 +146,45 @@ def system_order(pack, ids):
     return sequence
 
 def check_workspace(workspace, pack, project):
-    require(workspace.is_dir() and not workspace.is_symlink(), "Workspace not a directory")
-    rules_dir = workspace / ".ai-rules"
-    require(not rules_dir.is_symlink(), "Unsafe workspace marker directory")
-    marker = rules_dir / "workspace.json"
-    alt = rules_dir / "workspace.local.json"
-    require(marker.exists() != alt.exists(), "Exactly one trust-domain marker required")
-    data = read_json(marker if marker.exists() else alt)
-    require(isinstance(data, dict) and data ==
-            {"schema_version":1, "trust_domain":pack["trust_domain"],
-             "policy_owner":"personal" if pack["trust_domain"] == "personal" else "organization"},
-            "Workspace trust domain does not match policy package")
+    require(workspace.is_dir() and not workspace.is_symlink(),
+            "Target workspace directory missing or unsafe; check --workspace")
+    # Check repository identity first: a wrong local checkout should never be
+    # mistaken for a missing policy marker and "fixed" by adding one.
     try:
         remote = subprocess.run(["git", "-C", str(workspace), "remote", "get-url", "origin"],
                                 capture_output=True, text=True, timeout=5, check=False)
     except (OSError, subprocess.TimeoutExpired) as exc:
-        raise PolicyError("Cannot validate local git remote") from exc
-    require(remote.returncode == 0, "Project has no verifiable origin remote")
+        raise PolicyError("Cannot validate local Git origin") from exc
+    require(remote.returncode == 0, "Target workspace has no Git origin; verify --workspace")
     url = remote.stdout.strip()
-    # Local remote assertions only; push/PR also requires external GitHub permissions.
+    # This is only a local identity check, not proof of GitHub access rights.
     match = re.fullmatch(r"(?:https://github\.com/|git@github\.com:)([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?/?", url)
-    require(match is not None, "Unsupported GitHub origin; must classify manually")
+    require(match is not None, "Unsupported GitHub origin; verify --workspace")
     require(match.group(1).lower() == project["repository"].lower(),
-            "Repository mismatch: refusing cross-workspace rule selection")
+            "Repository mismatch: Git origin differs from registered project; verify --workspace, not its marker")
+
+    rules_dir = workspace / ".ai-rules"
+    require(not rules_dir.is_symlink(), "Unsafe workspace marker directory")
+    marker = rules_dir / "workspace.json"
+    alt = rules_dir / "workspace.local.json"
+    # Recognize broken symlinks as unsafe entries, rather than as absent files.
+    primary = marker.exists() or marker.is_symlink()
+    secondary = alt.exists() or alt.is_symlink()
+    if not primary and not secondary:
+        raise PolicyError(
+            "Missing trust-domain marker in target repo. First update that project's "
+            "local checkout (git -C <workspace> pull --ff-only) after checking Git origin; "
+            "do not guess employer ownership.")
+    if primary and secondary:
+        raise PolicyError(
+            "Conflicting trust-domain markers: both workspace.json and "
+            "workspace.local.json exist. Review ownership; do not delete either blindly.")
+    data = read_json(marker if primary else alt)
+    require(isinstance(data, dict) and data ==
+            {"schema_version": 1, "trust_domain": pack["trust_domain"],
+             "policy_owner": "personal" if pack["trust_domain"] == "personal" else "organization"},
+            "Workspace trust domain does not match policy package")
+
 
 def assemble(pack, known, project_id, feature=None):
     require(project_id in pack["projects"], "Unknown project")
