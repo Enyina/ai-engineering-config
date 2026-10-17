@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "pipelines": [
+    {
+      "id": "video-to-skill",
+      "inputs": [
+        "youtube_url",
+        "video_url",
+        "video_file",
+        "video_transcript"
+      ],
+      "outputs": [
+        "skill"
+      ],
+      "requires": [
+        "media_evidence"
+      ],
+      "status": "registered"
+    },
+    {
+      "id": "concept-to-feature",
+      "inputs": [
+        "concept"
+      ],
+      "outputs": [
+        "feature_spec"
+      ],
+      "requires": [
+        "reference_research"
+      ],
+      "status": "registered"
+    },
+    {
+      "id": "feature-to-skill",
+      "inputs": [
+        "feature"
+      ],
+      "outputs": [
+        "skill"
+      ],
+      "requires": [
+        "behavior_evidence"
+      ],
+      "status": "registered"
+    },
+    {
+      "id": "repository-to-skill",
+      "inputs": [
+        "repository_url"
+      ],
+      "outputs": [
+        "skill"
+      ],
+      "requires": [
+        "code_evidence"
+      ],
+      "status": "registered"
+    },
+    {
+      "id": "research-to-implementation",
+      "inputs": [
+        "research"
+      ],
+      "outputs": [
+        "implementation_plan"
+      ],
+      "requires": [
+        "source_evidence"
+      ],
+      "status": "registered"
+    },
+    {
+      "id": "experience-to-rule",
+      "inputs": [
+        "experience"
+      ],
+      "outputs": [
+        "rule_proposal"
+      ],
+      "requires": [
+        "observed_evidence"
+      ],
+      "status": "registered"
+    },
+    {
+      "id": "skill-to-project",
+      "inputs": [
+        "skill"
+      ],
+      "outputs": [
+        "project_change"
+      ],
+      "requires": [
+        "project_context"
+      ],
+      "status": "registered"
+    }
+  ]
+}
