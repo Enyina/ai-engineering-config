@@ -368,6 +368,8 @@ def main():
         for name,available in agents_available(home).items():
             print("  "+name+": "+("found" if available else "not detected (still supported)"))
         roots=args.projects_root or [ROOT.parent]
+        if not args.projects_root and not args.project and not args.apply and not args.check and sys.stdin.isatty():
+            get_personal_projects(ROOT.parent,known)
         candidates=list(project_candidates(roots,args.project))
         verified=[]
         for candidate in candidates:
