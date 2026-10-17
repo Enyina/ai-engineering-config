@@ -1,0 +1,303 @@
+{
+  "schema_version": 1,
+  "owner": "personal",
+  "policy": "Curated public source links and independently written summaries. No verbatim paid/proprietary content. New observations only become proposals, never active rules.",
+  "sources": [
+    {
+      "id": "nng-heuristics",
+      "publisher": "Nielsen Norman Group",
+      "domain": "design",
+      "kind": "research",
+      "url": "https://www.nngroup.com/articles/ten-usability-heuristics/",
+      "insight": "Usability heuristics support visible feedback, error recovery, consistency and user control; broad evaluation guidance, not a rigid visual template.",
+      "rights": "copyright-restricted",
+      "tags": [
+        "feedback",
+        "navigation",
+        "forms",
+        "editor",
+        "dashboard"
+      ],
+      "reviewed_on": "2026-10-17",
+      "status": "curated-reference",
+      "source_scope": "public",
+      "rule_status": "not-auto-approved"
+    },
+    {
+      "id": "wcag22",
+      "publisher": "W3C",
+      "domain": "design",
+      "kind": "standard",
+      "url": "https://www.w3.org/TR/WCAG22/",
+      "insight": "WCAG 2.2 provides testable accessibility success criteria; apply appropriate levels with current project obligations.",
+      "rights": "W3C-document-license",
+      "tags": [
+        "accessibility",
+        "navigation",
+        "forms",
+        "editor",
+        "dashboard"
+      ],
+      "reviewed_on": "2026-10-17",
+      "status": "curated-reference",
+      "source_scope": "public",
+      "rule_status": "not-auto-approved"
+    },
+    {
+      "id": "apple-hig",
+      "publisher": "Apple Developer",
+      "domain": "design",
+      "kind": "platform",
+      "url": "https://developer.apple.com/design/human-interface-guidelines/",
+      "insight": "Apple HIG documents platform-specific layout, navigation, inputs and accessible interaction; not mandatory styling for every web product.",
+      "rights": "copyright-restricted",
+      "tags": [
+        "mobile",
+        "navigation",
+        "editor",
+        "typography"
+      ],
+      "reviewed_on": "2026-10-17",
+      "status": "curated-reference",
+      "source_scope": "public",
+      "rule_status": "not-auto-approved"
+    },
+    {
+      "id": "material3",
+      "publisher": "Google Material Design",
+      "domain": "design",
+      "kind": "design-system",
+      "url": "https://m3.material.io/",
+      "insight": "Material 3 offers component behavior and adaptive interface examples; use as a comparison, not as compulsory branding.",
+      "rights": "copyright-restricted",
+      "tags": [
+        "mobile",
+        "forms",
+        "navigation",
+        "feedback"
+      ],
+      "reviewed_on": "2026-10-17",
+      "status": "curated-reference",
+      "source_scope": "public",
+      "rule_status": "not-auto-approved"
+    },
+    {
+      "id": "carbon",
+      "publisher": "IBM Carbon",
+      "domain": "design",
+      "kind": "design-system",
+      "url": "https://carbondesignsystem.com/",
+      "insight": "Carbon offers enterprise UI, design tokens and component behavior examples.",
+      "rights": "verify-per-asset",
+      "tags": [
+        "dashboard",
+        "forms",
+        "design-system",
+        "navigation"
+      ],
+      "reviewed_on": "2026-10-17",
+      "status": "curated-reference",
+      "source_scope": "public",
+      "rule_status": "not-auto-approved"
+    },
+    {
+      "id": "atlassian",
+      "publisher": "Atlassian Design System",
+      "domain": "design",
+      "kind": "design-system",
+      "url": "https://atlassian.design/",
+      "insight": "Atlassian documents patterns for complex collaborative workflows and reusable product components.",
+      "rights": "copyright-restricted",
+      "tags": [
+        "dashboard",
+        "navigation",
+        "forms"
+      ],
+      "reviewed_on": "2026-10-17",
+      "status": "curated-reference",
+      "source_scope": "public",
+      "rule_status": "not-auto-approved"
+    },
+    {
+      "id": "govuk",
+      "publisher": "GOV.UK Design System",
+      "domain": "design",
+      "kind": "public-design-system",
+      "url": "https://design-system.service.gov.uk/",
+      "insight": "GOV.UK provides practical forms and error-handling patterns emphasizing clear language and task completion.",
+      "rights": "verify-per-asset",
+      "tags": [
+        "forms",
+        "errors",
+        "accessibility"
+      ],
+      "reviewed_on": "2026-10-17",
+      "status": "curated-reference",
+      "source_scope": "public",
+      "rule_status": "not-auto-approved"
+    },
+    {
+      "id": "baymard-checkout",
+      "publisher": "Baymard Institute",
+      "domain": "design",
+      "kind": "user-research",
+      "url": "https://baymard.com/research/checkout-usability",
+      "insight": "Commerce checkout research documents observed customer friction; generalize cautiously and do not reproduce paid findings.",
+      "rights": "copyright-restricted",
+      "tags": [
+        "checkout",
+        "forms",
+        "commerce"
+      ],
+      "reviewed_on": "2026-10-17",
+      "status": "curated-reference",
+      "source_scope": "public",
+      "rule_status": "not-auto-approved"
+    },
+    {
+      "id": "owasp-asvs",
+      "publisher": "OWASP",
+      "domain": "engineering",
+      "kind": "standard",
+      "url": "https://owasp.org/www-project-application-security-verification-standard/",
+      "insight": "ASVS provides an application-security requirements and verification framework; assess version applicability.",
+      "rights": "check-license",
+      "tags": [
+        "security",
+        "authentication",
+        "payments",
+        "backend"
+      ],
+      "reviewed_on": "2026-10-17",
+      "status": "curated-reference",
+      "source_scope": "public",
+      "rule_status": "not-auto-approved"
+    },
+    {
+      "id": "nist-ssdf",
+      "publisher": "NIST",
+      "domain": "engineering",
+      "kind": "standard",
+      "url": "https://csrc.nist.gov/pubs/sp/800/218/final",
+      "insight": "SSDF groups software security activities across development, validation and release.",
+      "rights": "public-government-publication",
+      "tags": [
+        "security",
+        "testing",
+        "delivery"
+      ],
+      "reviewed_on": "2026-10-17",
+      "status": "curated-reference",
+      "source_scope": "public",
+      "rule_status": "not-auto-approved"
+    },
+    {
+      "id": "google-eng",
+      "publisher": "Google Engineering Practices",
+      "domain": "engineering",
+      "kind": "archived-guidance",
+      "url": "https://google.github.io/eng-practices/review/",
+      "insight": "Google's published code-review guide discusses design, maintainability, functionality and complexity. Its upstream repository is archived; treat as historical guidance.",
+      "rights": "CC-BY-3.0-with-attribution",
+      "tags": [
+        "review",
+        "maintainability",
+        "architecture"
+      ],
+      "reviewed_on": "2026-10-17",
+      "status": "curated-reference",
+      "source_scope": "public",
+      "rule_status": "not-auto-approved"
+    },
+    {
+      "id": "mdn-web",
+      "publisher": "MDN Web Docs",
+      "domain": "engineering",
+      "kind": "documentation",
+      "url": "https://developer.mozilla.org/en-US/docs/Web",
+      "insight": "MDN documents platform APIs and behavior; verify browser support against the actual target browsers.",
+      "rights": "CC-BY-SA-docs-check-assets",
+      "tags": [
+        "frontend",
+        "accessibility",
+        "browser"
+      ],
+      "reviewed_on": "2026-10-17",
+      "status": "curated-reference",
+      "source_scope": "public",
+      "rule_status": "not-auto-approved"
+    },
+    {
+      "id": "react-docs",
+      "publisher": "React",
+      "domain": "engineering",
+      "kind": "framework-documentation",
+      "url": "https://react.dev/learn",
+      "insight": "Official React guidance covers component state, data flow and effects; apply only to React projects.",
+      "rights": "CC-BY-4.0-docs-check-code",
+      "tags": [
+        "frontend",
+        "react",
+        "state"
+      ],
+      "reviewed_on": "2026-10-17",
+      "status": "curated-reference",
+      "source_scope": "public",
+      "rule_status": "not-auto-approved"
+    },
+    {
+      "id": "typescript-docs",
+      "publisher": "TypeScript",
+      "domain": "engineering",
+      "kind": "language-documentation",
+      "url": "https://www.typescriptlang.org/docs/",
+      "insight": "Official TypeScript docs explain static types, narrowing and compiler behavior.",
+      "rights": "check-license",
+      "tags": [
+        "typescript",
+        "backend",
+        "frontend"
+      ],
+      "reviewed_on": "2026-10-17",
+      "status": "curated-reference",
+      "source_scope": "public",
+      "rule_status": "not-auto-approved"
+    },
+    {
+      "id": "playwright",
+      "publisher": "Playwright",
+      "domain": "engineering",
+      "kind": "testing-documentation",
+      "url": "https://playwright.dev/docs/intro",
+      "insight": "Official browser testing guidance supports user-visible workflow checks across browsers.",
+      "rights": "Apache-2.0-docs-check",
+      "tags": [
+        "testing",
+        "frontend",
+        "browser"
+      ],
+      "reviewed_on": "2026-10-17",
+      "status": "curated-reference",
+      "source_scope": "public",
+      "rule_status": "not-auto-approved"
+    },
+    {
+      "id": "storybook",
+      "publisher": "Storybook",
+      "domain": "engineering",
+      "kind": "component-testing",
+      "url": "https://storybook.js.org/docs",
+      "insight": "Storybook documents isolated component development and interaction tests; fit depends on app architecture.",
+      "rights": "MIT-docs-check",
+      "tags": [
+        "testing",
+        "components",
+        "frontend"
+      ],
+      "reviewed_on": "2026-10-17",
+      "status": "curated-reference",
+      "source_scope": "public",
+      "rule_status": "not-auto-approved"
+    }
+  ]
+}

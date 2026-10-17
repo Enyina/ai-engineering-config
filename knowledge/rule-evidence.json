@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "owner": "personal",
+  "rule_sources": {
+    "research.options": {
+      "sources": [
+        "nng-heuristics",
+        "google-eng"
+      ],
+      "interpretation_status": "proposed_guidance_and_project_tests_required",
+      "source_scope": "public",
+      "license_policy": "Link and independently summarize; do not copy restricted text or assets."
+    },
+    "engineering.source-evidence": {
+      "sources": [
+        "nist-ssdf",
+        "google-eng",
+        "react-docs"
+      ],
+      "interpretation_status": "proposed_guidance_and_project_tests_required",
+      "source_scope": "public",
+      "license_policy": "Link and independently summarize; do not copy restricted text or assets."
+    },
+    "design.clarity": {
+      "sources": [
+        "nng-heuristics",
+        "govuk"
+      ],
+      "interpretation_status": "proposed_guidance_and_project_tests_required",
+      "source_scope": "public",
+      "license_policy": "Link and independently summarize; do not copy restricted text or assets."
+    },
+    "design.accessibility": {
+      "sources": [
+        "wcag22",
+        "apple-hig"
+      ],
+      "interpretation_status": "proposed_guidance_and_project_tests_required",
+      "source_scope": "public",
+      "license_policy": "Link and independently summarize; do not copy restricted text or assets."
+    },
+    "design.consistency": {
+      "sources": [
+        "material3",
+        "carbon",
+        "atlassian"
+      ],
+      "interpretation_status": "proposed_guidance_and_project_tests_required",
+      "source_scope": "public",
+      "license_policy": "Link and independently summarize; do not copy restricted text or assets."
+    },
+    "design.evaluation": {
+      "sources": [
+        "nng-heuristics",
+        "baymard-checkout"
+      ],
+      "interpretation_status": "proposed_guidance_and_project_tests_required",
+      "source_scope": "public",
+      "license_policy": "Link and independently summarize; do not copy restricted text or assets."
+    },
+    "engineering.boundaries": {
+      "sources": [
+        "owasp-asvs",
+        "nist-ssdf"
+      ],
+      "interpretation_status": "proposed_guidance_and_project_tests_required",
+      "source_scope": "public",
+      "license_policy": "Link and independently summarize; do not copy restricted text or assets."
+    },
+    "engineering.verification": {
+      "sources": [
+        "nist-ssdf",
+        "playwright",
+        "storybook"
+      ],
+      "interpretation_status": "proposed_guidance_and_project_tests_required",
+      "source_scope": "public",
+      "license_policy": "Link and independently summarize; do not copy restricted text or assets."
+    }
+  }
+}

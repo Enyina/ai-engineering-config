@@ -1,0 +1,28 @@
+name: Review public design and engineering sources
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Read approved personal knowledge library
+        uses: actions/checkout@v4
+      - name: Validate source and option catalogs
+        run: python3 bin/ai-intelligence validate
+      - name: Check revision signals from approved public websites
+        run: python3 bin/ai-source-watch --network --timeout 4 --output public-source-review.json
+      - name: Save review candidates for a person to assess
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-design-and-engineering-source-review
+          path: public-source-review.json
+          retention-days: 14
+          if-no-files-found: error
