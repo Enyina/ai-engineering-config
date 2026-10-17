@@ -286,8 +286,23 @@ def apply_actions(actions, folder, prior):
 def rollback(folder):
     manifest=load_state(folder)
     actions=[]
+    allowed = registry()
     for name, info in manifest["files"].items():
         target=Path(name)
+        require(isinstance(info,dict) and info.get("project") in allowed,
+                "Unrecognized setup record project")
+        if target.name == "AGENTS.md" or target.name == "CLAUDE.md":
+            root = target.parent
+            relative = target.name
+        elif target.name == "ai-engineering-setup.mdc":
+            root = target.parent.parent.parent
+            relative = CURSOR
+        else:
+            raise SetupError("Unrecognized managed file in setup record")
+        require(safe_path(root, relative) == target, "Unsafe restore path")
+        verified = project_context(root, allowed)
+        require(verified is not None and verified["name"] == info["project"],
+                "Original personal project identity is no longer verified")
         require(not target.is_symlink(), "Unsafe installed file during rollback")
         current=read_existing(target)
         if current is None or digest(current)!=info["installed_sha256"]:
