@@ -36,3 +36,10 @@ We've recorded a new review method for checking personal websites against actual
 
 Suggested changes to showcased projects must be explained before anything is hidden, replaced, or rewritten. The new method is waiting for review and has not changed the public website.
 
+**More useful advice at work**
+
+The system can now suggest relevant approaches even when a workplace has no specific instruction for a task. Every suggestion shows where the idea came from, and workplace requirements still come first. Nothing is copied into a workplace automatically.
+
+**More frequent research checks**
+
+Approved public references will now be checked twice a day instead of once a week. Any possible changes are flagged for review before affecting future guidance.

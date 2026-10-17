@@ -5,7 +5,7 @@ description: Compare credible coding and architecture strategies for authorized 
 
 # Evidence-led engineering
 
-1. Inspect current code, user outcome, architecture, repository state, tests and failure evidence. Check exact tool/framework versions before relying on documentation.
+1. Inspect current code, user outcome, architecture, repository state, tests and failure evidence in an authorized environment. Check exact tool/framework versions before relying on documentation. If an employer has no specific rule, still compare official public guidance and **general** reusable personal approaches, naming their provenance and checking employer policy before adoption. Suggestions do not become company rules automatically. Use `bin/ai-intelligence suggest --advisory-for-employer` with a non-confidential topic when needed.
 2. Use the curated `knowledge/sources/catalog.json` and actual official upstream docs, standards and working examples. Prefer OWASP/NIST for security, official languages/frameworks for API semantics, Playwright/Storybook for UI testing, and scoped Google engineering advice for review discipline. Its upstream engineering-practices repo is archived; do not treat it as a current evolving standard.
 3. From central config run `python3 bin/ai-intelligence suggest --workspace <repo> --project <id> --domain engineering --task "<specific technical problem>"` to inspect genuinely different options; this never writes code or selects a winner.
 4. Record benefits, tradeoffs, failure cases, complexity and costs; independently choose based on project constraints. Never infer that a source explicitly endorses our own comparison option.
