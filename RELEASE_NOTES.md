@@ -43,3 +43,8 @@ The system can now suggest relevant approaches even when a workplace has no spec
 **More frequent research checks**
 
 Approved public references will now be checked twice a day instead of once a week. Any possible changes are flagged for review before affecting future guidance.
+
+
+**Easier everyday questions**
+
+Personal projects can now get design or coding suggestions from a short question. The new helper checks which project is being worked on and explains different approaches in plain English.
