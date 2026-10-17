@@ -77,6 +77,11 @@
       "id": "delivery.release-notes",
       "kind": "required",
       "text": "For every meaningful delivered change, write or update the project's human-facing release notes. Write for people who do not work in software: short everyday English, explain what changed and why it matters, say if anything is still unavailable, and avoid code jargon, internal file names, technical command names and unexplained abbreviations. Keep technical test and implementation details in a separate engineering report, not the release notes."
+    },
+    {
+      "id": "web.design-evidence",
+      "kind": "guidance",
+      "text": "For personal web products, work from actual users and existing design systems, benchmark proven lawful UI patterns, create original responsive and accessible interfaces, show verified versus unknown data honestly, and validate desktop/mobile/error/empty states. For design approval gates, present separate illustrative prototypes and never modify reference designs without permission. See rules/categories/UX-UI-DESIGN.md."
     }
   ],
   "global": {
@@ -105,7 +110,8 @@
   "categories": {
     "web-product": {
       "rules": [
-        "web.product"
+        "web.product",
+        "web.design-evidence"
       ],
       "preferences": {
         "test_focus": "Responsive, accessibility and browser flows."
