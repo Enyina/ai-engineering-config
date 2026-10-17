@@ -32,7 +32,7 @@ class FriendlyAskTests(unittest.TestCase):
                               capture_output=True,text=True,timeout=25)
 
     def test_one_sentence_autodetects_personal_project_and_design(self):
-        out=self.ask("improve the garment editor layout")
+        out=self.ask("make the clothing editor easier to use")
         self.assertEqual(out.returncode,0,out.stderr)
         self.assertIn("Personal project advice",out.stdout)
         self.assertIn("Rules selected for: moatt",out.stdout)
