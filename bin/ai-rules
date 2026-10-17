@@ -326,7 +326,8 @@ def main():
             require(args.project is not None,"--project is required")
             require(not args.apply or args.command in ("onboard","render","sync"),
                     "--apply is not valid for read-only commands")
-            check_workspace(args.workspace,pack,pack["projects"].get(args.project,{}))
+            require(args.project in pack["projects"], "Unknown project")
+            check_workspace(args.workspace,pack,pack["projects"][args.project])
             effective = assemble(pack,known,args.project,args.feature)
             agents = AGENTS if args.agent == "all" else (args.agent,)
             outputs = rendered(effective,agents)
