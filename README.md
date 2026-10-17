@@ -2,6 +2,12 @@
 
 Canonical personal engineering rules: [AGENTS.md](AGENTS.md). **Reverse Engineering First** is the default for significant projects.
 
+## Execution roadmap
+
+**[Self-Improving AI Engineering System — 7 milestones](docs/SELF-IMPROVING-ROADMAP.md)**
+
+Phase A: audit + secure current Mac rules; deterministic scope resolution; Codex/Claude Code/Cursor adapters; reverse-engineering skill; evidence-gated lessons; opt-in onboarding/CI. Phase B: private Godot Time Arena lab proving the complete workflow. **Milestone 1 is open** because the local `default.rules` and `config.safe.toml` are not yet inspected; do not commit unreviewed snapshots or run irreversible resets.
+
 ## Scoping
 - Global: `AGENTS.md` — stable standards.
 - Opt-in categories: `categories/` — web product, backend reliability, game development, AI media.
