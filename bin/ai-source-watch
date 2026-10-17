@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+"""Check curated public-source metadata and flag review candidates.
+
+No page text is stored; HTTPS HEAD only, no redirects, capped request count,
+no automatic acceptance of source revisions or rule promotion.
+"""
+import argparse
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlsplit
+from urllib.request import HTTPRedirectHandler, Request, build_opener
+
+ROOT = Path(__file__).resolve().parents[1]
+CATALOG = ROOT / "knowledge/sources/catalog.json"
+BASELINE = ROOT / "knowledge/sources/checkpoints.json"
+OFFICIAL_HOSTS = {
+    "www.nngroup.com","www.w3.org","developer.apple.com","m3.material.io",
+    "carbondesignsystem.com","atlassian.design","design-system.service.gov.uk",
+    "baymard.com","owasp.org","csrc.nist.gov","google.github.io",
+    "developer.mozilla.org","react.dev","www.typescriptlang.org",
+    "playwright.dev","storybook.js.org"
+}
+
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+def validate(catalog, snapshot):
+    if catalog.get("owner") != "personal" or catalog.get("schema_version") != 1:
+        raise ValueError("Only personal curated sources may be monitored")
+    if snapshot.get("schema_version") != 1 or snapshot.get("owner") != "personal":
+        raise ValueError("Invalid personal checkpoint baseline")
+    if not isinstance(snapshot.get("sources"), dict):
+        raise ValueError("Invalid source checkpoint list")
+    results = []
+    for item in catalog["sources"]:
+        url = urlsplit(item["url"])
+        if (url.scheme != "https" or url.hostname not in OFFICIAL_HOSTS
+                or url.username or url.password or url.port):
+            raise ValueError("Non-allowlisted knowledge source")
+        results.append(item)
+    return results
+
+def fetch_metadata(url, timeout):
+    request = Request(url, method="HEAD", headers={"User-Agent":"personal-engineering-knowledge-review/1.0"})
+    opener = build_opener(NoRedirect())
+    try:
+        with opener.open(request, timeout=timeout) as response:
+            headers = response.headers
+            # Treat metadata as *signals*; ETags often reflect page chrome.
+            return {"status":"observed","http_code":response.status,
+                    "etag":(headers.get("ETag") or "")[:200],
+                    "last_modified":(headers.get("Last-Modified") or "")[:200]}
+    except HTTPError as exc:
+        return {"status":"unavailable","http_code":exc.code}
+    except (OSError, URLError, TimeoutError, ValueError):
+        return {"status":"unavailable","http_code":None}
+
+def evaluate(items, baseline, network, timeout):
+    report = []
+    for source in items:
+        saved = baseline["sources"].get(source["id"], {})
+        if not network:
+            state = "unchecked"
+            observation = {}
+        else:
+            observation = fetch_metadata(source["url"], timeout)
+            if observation["status"] != "observed":
+                state = "could_not_check"
+            elif not observation["etag"] and not observation["last_modified"]:
+                state = "no_stable_revision_metadata"
+            elif not saved:
+                state = "baseline_review_needed"
+            elif any(saved.get(k) and observation.get(k) and saved[k] != observation[k]
+                     for k in ("etag", "last_modified")):
+                state = "source_change_candidate"
+            else:
+                state = "no_detected_metadata_change"
+        report.append({"id":source["id"],"domain":source["domain"],
+                       "source":source["url"],"state":state,
+                       "observation":observation,
+                       "rule_automatically_changed":False})
+    return {"schema_version":1,"trust_domain":"personal",
+            "checked_at":datetime.now(timezone.utc).isoformat(),
+            "method":"metadata_only_no_redirects",
+            "notice":"Source changes are candidate reviews only, not new rules, claims or proof of page content.",
+            "sources":report}
+
+def main():
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--network",action="store_true",
+                   help="Opt-in HEAD checks of public allowlisted sites")
+    p.add_argument("--timeout",type=float,default=3.0)
+    p.add_argument("--output",type=Path)
+    args=p.parse_args()
+    try:
+        if not 0.2 <= args.timeout <= 10:
+            raise ValueError("Invalid request timeout")
+        catalog=json.loads(CATALOG.read_text(encoding="utf-8"))
+        baseline=json.loads(BASELINE.read_text(encoding="utf-8"))
+        items=validate(catalog,baseline)
+        result=evaluate(items,baseline,args.network,args.timeout)
+        body=json.dumps(result,indent=2)+"\n"
+        if args.output:
+            # Only explicit output destination; never change active rules.
+            if args.output.is_symlink():
+                raise ValueError("Output path must not be a symlink")
+            args.output.parent.mkdir(parents=True,exist_ok=True)
+            args.output.write_text(body,encoding="utf-8")
+        print(body,end="")
+    except (OSError,ValueError,KeyError,TypeError,json.JSONDecodeError) as exc:
+        print("Source review refused: "+type(exc).__name__,file=sys.stderr)
+        return 2
+    return 0
+
+if __name__=="__main__":
+    sys.exit(main())
