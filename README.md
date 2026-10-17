@@ -2,6 +2,10 @@
 
 Canonical personal engineering rules: [AGENTS.md](AGENTS.md). **Reverse Engineering First** is the default for significant projects.
 
+## Clear commits and release notes
+
+Completed authorized work should end in a focused commit and short release notes written in ordinary English for people who aren't developers. Describe what changed, the benefit, and any remaining limitations. Keep internal implementation and test details in technical engineering reports. Respect each project's release process and employer policies. See [plain-English delivery standard](docs/PLAIN-ENGLISH-DELIVERY.md) and [example release notes](RELEASE_NOTES.md).
+
 ## Execution roadmap
 
 **[Self-Improving AI Engineering System — 7 milestones](docs/SELF-IMPROVING-ROADMAP.md)**
