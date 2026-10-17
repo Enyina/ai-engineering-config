@@ -25,7 +25,7 @@ An authorized new repository can be onboarded with a declared project category, 
 **Verified in the connected private repo:** `AGENTS.md`, `rules/CORE-ENGINEERING.md`, `rules/LEARNING-PROTOCOL.md`, `categories/*.md`, `projects/*.md`, `rules/categories/3D-EDITORS.md`, Moatt overlay, and `bin/codex-portable.py`. The repo also has safety/unit test sources and an initial audit document.
 
 **Unresolved:**
-- User's original Mac snapshot listed `config.safe.toml`, `rules/default.rules`, and bundled `.system` skills, but no user-level `AGENTS.md`. The content of the first two files has **not** been inspected here. Local revised capture and tests need their results confirmed.
+- User's revised Mac snapshot contains `config.safe.toml`, `rules/default.rules` and `manifest.json` (bundled `.system` skills excluded), with no user-level `AGENTS.md`. The user-provided contents showed historical `model=gpt-5.6-sol`, low reasoning effort and 104 `allow` command prefixes, including employer-specific/debugging commands. Their automatic activation/removal has **not** occurred. Historical approval/sandbox enforcement and a clean Mac test rerun still need verification; see `docs/COMMAND-PERMISSIONS-REVIEW.md`.
 - Legacy layout duplicates rule intent between root `AGENTS.md`, `rules/CORE-ENGINEERING.md`, `categories/` vs `rules/categories/`, and `projects/` vs `rules/projects/`. No automatic migration until inventory and golden tests protect intended behavior.
 - Moatt and portfolio reference templates exist. Their actual repo-level agent integrations and local behavior have **not** been independently validated in this milestone.
 - No deterministic rule engine, adapters, CI onboarding automation or usable Godot lab is verified as complete.
@@ -33,13 +33,14 @@ An authorized new repository can be onboarded with a declared project category, 
 ## Non-negotiable design constraints
 
 1. **Ownership/privacy:** personal repos only by default. Exclude company instructions, customers, production settings, credentials, secrets, session history and unreviewed tool scripts. A private GitHub repo is not a secret vault.
-2. **Rule authority:** organizational/agent/system instructions and actual platform controls outrank this custom registry. Within the user-owned generated bundle, use `mandatory security invariants → global → selected category → project → feature`. Later layers may refine or explicitly override **non-security** preferences, but cannot weaken mandatory security or claim to override vendor policies.
-3. **Deterministic scope:** resolve from explicit manifest, paths, and feature tags; no free-form LLM guess is allowed to activate a rule. AI recommendations are suggestions for review.
-4. **Single source:** one canonical `rules/` registry, unique IDs, version and ownership metadata. The root `AGENTS.md`, `CLAUDE.md` and Cursor artifacts become outputs/templates or compact bootstrap pointers—not competing manually edited copies. Preserve old paths behind compatibility mapping until retired.
-5. **No surprise writes:** inspect, resolve, validate and dry-run are read-only. Onboard/sync writes only after preview, owner permissions and explicit `--apply`. No force push or editing unrelated files. Changes to existing projects go through branches/PRs.
-6. **Verification truth:** distinguish planned, committed, tests executed, CI results, manual acceptance and deployed behavior. Never call a test "passed" unless it ran.
-7. **Evidence-gated learning:** learning means rule improvement via reviewed proposals, not training the underlying model or auto-editing global prompts.
-8. **Separation:** Moatt garment geometry/viewport rules must never affect game physics or backend systems. Similarly, personal work may not overwrite a company's repository policy.
+2. **Trust-domain separation (first):** classify explicitly as personal, employer-owned or unclassified **before** category or feature resolution. Personal automation refuses employer/unknown workspaces; organizational rules, credentials, sessions and command approvals remain inside approved employer environments. A future resolver must enforce [docs/TRUST-DOMAINS.md](TRUST-DOMAINS.md) and verify authorization, not rely on a marker alone.
+3. **Rule authority:** organizational/agent/system instructions and actual platform controls outrank this custom registry. Within the user-owned generated bundle, use `mandatory security invariants → global → selected category → project → feature`. Later layers may refine or explicitly override **non-security** preferences, but cannot weaken mandatory security or claim to override vendor policies.
+4. **Deterministic scope:** resolve from explicit manifest, paths, and feature tags; no free-form LLM guess is allowed to activate a rule. AI recommendations are suggestions for review.
+5. **Single source:** one canonical `rules/` registry, unique IDs, version and ownership metadata. The root `AGENTS.md`, `CLAUDE.md` and Cursor artifacts become outputs/templates or compact bootstrap pointers—not competing manually edited copies. Preserve old paths behind compatibility mapping until retired.
+6. **No surprise writes:** inspect, resolve, validate and dry-run are read-only. Onboard/sync writes only after preview, owner permissions and explicit `--apply`. No force push or editing unrelated files. Changes to existing projects go through branches/PRs.
+7. **Verification truth:** distinguish planned, committed, tests executed, CI results, manual acceptance and deployed behavior. Never call a test "passed" unless it ran.
+8. **Evidence-gated learning:** learning means rule improvement via reviewed proposals, not training the underlying model or auto-editing global prompts.
+9. **Separation:** Moatt garment geometry/viewport rules must never affect game physics or backend systems. Similarly, personal work may not overwrite a company's repository policy.
 
 ## Phase A — Build and validate the engineering foundation
 
@@ -69,7 +70,7 @@ An authorized new repository can be onboarded with a declared project category, 
 
 **CLI:** `ai-rules inspect`, `resolve --project ... --feature ...`, `explain`, `validate`.
 
-**Acceptance:** snapshot tests show Moatt gets product UX + 3D/garment rules but never game rules; Gaming gets performance/control/reverse-engineering but no garment rules; Portfolio gets public/admin UX but neither gaming nor garment rules; all share security constraints. `resolve` is deterministic and explains every inclusion/exclusion.
+**Acceptance:** unknown/employer workspaces deny personal rule selection even when they specify a matching category; snapshot tests show Moatt gets product UX + 3D/garment rules but never game rules; Gaming gets performance/control/reverse-engineering but no garment rules; Portfolio gets public/admin UX but neither gaming nor garment rules; all share security constraints. `resolve` is deterministic and explains every inclusion/exclusion.
 
 ### M3. Three-agent adapters
 
@@ -116,7 +117,7 @@ Provide evidence ledger, comparison and implementation-brief templates. No copyi
 - surface impacted files, rule provenance, test evidence and rollback in PR.
 - distinguish "no access" from "no drift"; run only for explicitly onboarded repositories.
 
-**Acceptance:** new authorized repository gets correct generated instructions and traceable manifest; duplicate run is idempotent; existing project changes produce an optional reviewable PR, preserve custom manual files and offer rollback. No unapproved writes to employer repositories.
+**Acceptance:** employer/unknown repos are denied by default; repository owner and authorization are verified, beyond declarative markers; new authorized personal repository gets correct generated instructions and traceable manifest; duplicate run is idempotent; existing project changes produce an optional reviewable PR, preserve custom manual files and offer rollback. No unapproved writes to employer repositories.
 
 **Foundation exit gate:** milestones 1–6 tested together on a fresh example repository, with failure injection for invalid rules, secrets, mixed-scope instructions, unauthorized destination and rollback.
 
