@@ -55,7 +55,7 @@ def items(path):
     output = []
     for base, dirs, files in os.walk(path, followlinks=False):
         base = Path(base)
-        dirs[:] = [d for d in dirs if d not in {".git", "node_modules", "__pycache__", ".venv"}]
+        dirs[:] = [d for d in dirs if d not in {".git", "node_modules", "__pycache__", ".venv", ".system"}]
         for d in dirs:
             if (base / d).is_symlink():
                 fail("Symlink directory refused: " + str(base / d))
@@ -128,51 +128,93 @@ def capture():
 def validated_snapshot():
     manifest_file = SNAP / "manifest.json"
     if not manifest_file.is_file():
-        fail("No snapshot manifest. Capture on source machine first.")
+        fail("No snapshot manifest. Capture on your source machine first.")
     manifest = json.loads(manifest_file.read_text())
+    checked = []
     for entry in manifest.get("files", []):
         path = Path(entry["path"])
-        if path.is_absolute() or ".." in path.parts or path.parts[0] not in {"codex", "agents"}:
-            fail("Unsafe manifest path")
+        if path.is_absolute() or ".." in path.parts or ".system" in path.parts:
+            fail("Unsafe or bundled-system path in manifest; run capture again")
+        if not any(str(path) == key or str(path).startswith(key + "/")
+                   for key in SOURCES):
+            if str(path) != "codex/config.safe.toml":
+                fail("Unexpected snapshot path: " + str(path))
         file = SNAP / path
         if not file.is_file() or not check_file(file) or digest(file) != entry["sha256"]:
             fail("Snapshot changed or unsafe: " + str(path))
+        checked.append(path)
+    actual = {str(p.relative_to(SNAP)) for p in SNAP.rglob("*") if p.is_file()}
+    expected = {str(p) for p in checked} | {"manifest.json"}
+    if actual != expected:
+        fail("Snapshot contents do not match manifest; recapture and review")
     return manifest
 
+def destination_for(relative):
+    key = str(relative)
+    for prefix, target in SOURCES.items():
+        if key == prefix and target.suffix:
+            return target
+        if key.startswith(prefix + "/") and not target.suffix:
+            return target / relative.relative_to(prefix)
+    fail("Unexpected snapshot file: " + key)
+
+def check_destination(destination):
+    node = destination
+    while node != node.parent:
+        if node.is_symlink():
+            fail("Symlink destination refused: " + str(node))
+        node = node.parent
+
 def restore(apply, config=False):
-    validated_snapshot()
-    print("RESTORE", "APPLY" if apply else "PREVIEW", "(existing overwritten paths are backed up)")
-    backup = HOME / ".codex-portable-backups" / datetime.now().strftime("%Y%m%d-%H%M%S-%f")
-    for name, destination in SOURCES.items():
-        source = SNAP / name
-        if not source.exists():
+    manifest = validated_snapshot()
+    receipt = HOME / ".codex-portable-installed.json"
+    if receipt.exists():
+        fail("An earlier managed install exists. Audit/reset it before another restore.")
+    actions = []
+    for entry in manifest["files"]:
+        relative = Path(entry["path"])
+        if str(relative) == "codex/config.safe.toml":
             continue
-        print(source, "->", destination)
-        if not apply:
-            continue
-        if destination.exists() or destination.is_symlink():
-            old = backup / name
-            old.parent.mkdir(parents=True, exist_ok=True)
-            shutil.move(str(destination), str(old))
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        if source.is_dir():
-            shutil.copytree(source, destination)
-        else:
-            shutil.copy2(source, destination)
+        dest = destination_for(relative)
+        check_destination(dest)
+        actions.append((SNAP / relative, dest, entry["sha256"]))
+    print("RESTORE", "APPLY" if apply else "PREVIEW", "— individual files only, never whole directories")
+    for _, destination, _ in actions:
+        print("  ", destination)
     safe = SNAP / "codex" / "config.safe.toml"
-    if config and safe.exists():
-        print("Safe config merge requested — review and merge manually:", safe)
-    if apply:
-        print("Restore complete. Restart Codex and audit again. Backups:", backup)
-    else:
-        print("Dry run. Add --apply after reviewing.")
+    if config and safe.is_file():
+        print("Safe config requires manual review and merge:", safe)
+    if not apply:
+        print("Dry run. Add --apply to install reviewed snapshot files.")
+        return
+    backup = HOME / ".codex-portable-backups" / datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    installed = []
+    for source, destination, checksum in actions:
+        original = None
+        if destination.exists():
+            relative = source.relative_to(SNAP)
+            original = backup / relative
+            original.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(destination, original)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, destination)
+        installed.append({"path": str(destination), "sha256": checksum,
+                          "backup": str(original) if original else None})
+    receipt.write_text(json.dumps({"files": installed, "created_at": datetime.now(timezone.utc).isoformat()}, indent=2) + "\n")
+    receipt.chmod(0o600)
+    print("Restored selected files; existing unrelated files preserved. Receipt:", receipt)
+    print("Backups:", backup)
 
 def reset(apply, confirmed):
-    for key, dest in SOURCES.items():
-        if dest.exists() or dest.is_symlink():
-            print("Would remove:", dest)
+    receipt = HOME / ".codex-portable-installed.json"
+    if not receipt.is_file():
+        print("No managed install receipt. Nothing will be removed. Existing personal files are untouched.")
+        return
+    installed = json.loads(receipt.read_text()).get("files", [])
+    for item in installed:
+        print("Managed file:", item["path"])
     if not apply:
-        print("DRY RUN. Use reset --apply --confirmed-remote after verifying a private remote backup.")
+        print("DRY RUN. After verifying private Git backup, use reset --apply --confirmed-remote.")
         return
     if not confirmed:
         fail("Explicit --confirmed-remote required")
@@ -188,12 +230,22 @@ def reset(apply, confirmed):
     verified = shell("git", "ls-remote", "--exit-code", remote_name, "refs/heads/" + branch)
     if verified.returncode or not verified.stdout or verified.stdout.split()[0] != head.stdout.strip():
         fail("Remote HEAD not confirmed; no changes performed")
-    for destination in SOURCES.values():
-        if destination.is_symlink() or destination.is_file():
-            destination.unlink()
-        elif destination.is_dir():
-            shutil.rmtree(destination)
-    print("Personal managed rules removed. Credentials, sessions, history and other configs NOT removed.")
+    # Refuse any changed or tampered managed file before removing anything.
+    for item in installed:
+        target = Path(item["path"])
+        check_destination(target)
+        if not target.is_file() or digest(target) != item["sha256"]:
+            fail("Installed rule modified; refusing reset: " + str(target))
+        original = item.get("backup")
+        if original and (not Path(original).is_file() or Path(original).is_symlink()):
+            fail("Previous file backup missing or unsafe: " + original)
+    for item in installed:
+        target = Path(item["path"])
+        target.unlink()
+        if item.get("backup"):
+            shutil.copy2(item["backup"], target)
+    receipt.unlink()
+    print("Managed rules reverted. Preexisting files restored. Auth, logs, history and unmanaged rules untouched.")
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
