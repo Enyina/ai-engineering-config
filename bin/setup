@@ -102,6 +102,24 @@ def project_candidates(roots, supplied):
             seen.add(resolved)
             yield resolved
 
+def get_personal_projects(root, known):
+    available = [(name, origin) for name, origin in sorted(known.items())
+                 if name in KNOWN_CLONES and not (root / name).exists()]
+    if not available:
+        return
+    print("Personal projects available:")
+    for name, _ in available:
+        print("  " + name)
+    if input("Get these personal projects from GitHub? [y/N] ").strip().lower() not in ("y", "yes"):
+        return
+    for name, origin in available:
+        target = root / name
+        require(not target.exists() and not target.is_symlink(), "Project folder changed")
+        result = command(["git", "clone", "--quiet", "https://github.com/" + origin + ".git",
+                          str(target)], timeout=120)
+        print("  " + (name + " ready" if result.returncode == 0 else
+                        name + " could not be downloaded; check GitHub sign-in"))
+
 def project_context(path, mapped):
     require(path.is_dir() and not path.is_symlink(), "Invalid project folder")
     origin = verified_origin(path)
@@ -350,6 +368,8 @@ def main():
         for name,available in agents_available(home).items():
             print("  "+name+": "+("found" if available else "not detected (still supported)"))
         roots=args.projects_root or [ROOT.parent]
+        if not args.projects_root and not args.project and not args.apply and not args.check and sys.stdin.isatty():
+            get_personal_projects(ROOT.parent,known)
         candidates=list(project_candidates(roots,args.project))
         verified=[]
         for candidate in candidates:

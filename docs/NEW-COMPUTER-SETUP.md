@@ -1,6 +1,6 @@
 # New computer setup
 
-Install Git and Python 3, and sign in to GitHub. Clone the private personal configuration and whichever personal projects you want to work on. From the configuration repository, run `python3 bin/setup`.
+Install Git and Python 3, and sign in to GitHub. Clone the private personal configuration, then run `python3 bin/setup` inside that repository. On the first interactive run, it offers to download your known personal projects from GitHub. You choose whether to download them. You can also clone individual projects yourself whenever you want.
 
 The installer identifies supported coding assistants and verified personal projects. It previews the proposed additions and asks before installing them. It preserves existing project instructions, writes only labeled personal guidance, and saves local backups. It never edits employer workspaces or global command permissions.
 
