@@ -192,7 +192,6 @@ def require_allowed_managed_file(destination):
             if dest.suffix.lower() in TEXT_SUFFIX:
                 return
     fail("Receipt refers to a non-managed path: " + str(destination))
-        node = node.parent
 
 def restore(apply, config=False):
     manifest = validated_snapshot()
