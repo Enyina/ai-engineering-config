@@ -7,6 +7,10 @@ For significant engineering/product work: define the outcome; inspect existing c
 ## Engineering quality
 Understand the current system before adding a new one. Prefer small, reversible changes and explicit acceptance criteria. Preserve existing behavior unless a change is requested. Validate failure modes, edge cases, accessibility, performance, security and regression risk. Never claim tests passed unless executed. State uncertainties.
 
+## Research-backed design and engineering
+
+For substantial personal UX/UI or architecture choices, consult the curated public references and alternative patterns under `knowledge/`. Start with existing product behavior and actual project constraints, then suggest distinct options, benefits, tradeoffs, acceptance checks and source links. Do not assume an elegant picture is proof of good usability or copy protected source designs. Scope design standards to interface projects and backend guidance to relevant systems. The `bin/ai-intelligence` advisor is read-only and requires a verified personal workspace. New findings go through human-reviewed proposals, not silent self-edits. Read [docs/PERSONAL-INTELLIGENCE.md](docs/PERSONAL-INTELLIGENCE.md) for details.
+
 ## Commit and release-note discipline
 
 When you finish an authorized change, make a focused Git commit, rather than leaving completed work uncommitted. **Write the commit headline itself in ordinary English**: describe what someone gained, what was corrected, or what risk was reduced. A reader should understand it without opening the code. Avoid jargon, unexplained abbreviations, file names, and developer-only prefixes when project rules permit. If a repository enforces a particular commit format, preserve its required structure while making the description clear; do not silently bypass project checks. Do not include unrelated changes, secrets or incomplete work. Respect higher-priority employer restrictions, project-specific release processes and an explicit user request not to commit. A commit does not authorize a push, merge, deployment, or publication. If a commit cannot be made, report the blocker clearly.

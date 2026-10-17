@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "owner": "personal",
+  "sources": {},
+  "note": "Intentionally unbaselined until an authorized human review. HEAD metadata is unreliable and must never auto-promote rules."
+}

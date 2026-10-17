@@ -16,3 +16,11 @@ These instructions have been saved for future use. They have not changed the too
 **Older guidance now matches**
 
 We have also updated older written instructions so they no longer give mixed advice about saving completed work. Future updates should explain changes in the same simple way.
+
+**Better suggestions for designs and code**
+
+Personal projects can now compare different approaches instead of following one familiar solution. Suggestions explain the benefits, drawbacks and what to check before choosing.
+
+We've also added a library of trusted public references and a regular check for possible changes. New findings will be reviewed before becoming permanent guidance.
+
+These improvements are saved in the shared personal guidance. They do not automatically redesign your projects or change your computer's settings.

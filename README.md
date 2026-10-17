@@ -2,6 +2,18 @@
 
 Canonical personal engineering rules: [AGENTS.md](AGENTS.md). **Reverse Engineering First** is the default for significant projects.
 
+## Personal design + engineering intelligence
+
+The private personal config now includes a sourced [design and engineering knowledge system](docs/PERSONAL-INTELLIGENCE.md): [public source catalog](knowledge/sources/catalog.json), [comparison patterns](knowledge/patterns/catalog.json), an evidence-linked [rule map](knowledge/rule-evidence.json), a deterministic `bin/ai-intelligence` advisor, scoped research skills and a weekly **review-only** source-update check. It does not copy employers' rules or automatically promote research into policies.
+
+```sh
+python3 bin/ai-intelligence validate
+python3 bin/ai-intelligence suggest --workspace ../moatt-verified --project moatt --feature garment-editor --domain design --task "garment editor layout"
+python3 bin/ai-source-watch
+```
+
+Design suggestions include alternatives and measurable checks, not untested claims. Existing personal fallback hierarchy is preserved; native agent loading and actual product tests must still be verified.
+
 ## Clear commits and release notes
 
 Completed authorized work should end in a focused commit and short release notes written in ordinary English for people who aren't developers. Describe what changed, the benefit, and any remaining limitations. Keep internal implementation and test details in technical engineering reports. Respect each project's release process and employer policies. See [plain-English delivery standard](docs/PLAIN-ENGLISH-DELIVERY.md) and [example release notes](RELEASE_NOTES.md).
