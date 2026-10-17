@@ -89,12 +89,41 @@ def evaluate(items, baseline, network, timeout):
             "notice":"Source changes are candidate reviews only, not new rules, claims or proof of page content.",
             "sources":report}
 
+def adopt_reviewed_report(report_path, items, current):
+    """Explicitly baseline reviewed public metadata; never approve or add rules."""
+    if not report_path.is_file() or report_path.is_symlink() or report_path.stat().st_size > 250000:
+        raise ValueError("Reviewed report is missing or unsafe")
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    if report.get("trust_domain") != "personal" or report.get("method") != "metadata_only_no_redirects":
+        raise ValueError("Incompatible report")
+    expected = {x["id"]:x["url"] for x in items}
+    incoming = report.get("sources")
+    if not isinstance(incoming, list) or len(incoming) != len(expected):
+        raise ValueError("Report does not cover the reviewed source catalog")
+    checkpoint = {}
+    for entry in incoming:
+        key = entry.get("id")
+        if key not in expected or key in checkpoint or entry.get("source") != expected[key]:
+            raise ValueError("Unexpected or repeated catalog entry")
+        observation = entry.get("observation") or {}
+        if observation.get("status") == "observed":
+            metadata = {k:observation.get(k) for k in ("etag", "last_modified") if observation.get(k)}
+            if metadata:
+                checkpoint[key] = metadata
+        elif key in current["sources"]:
+            checkpoint[key] = current["sources"][key]
+    next_baseline = {"schema_version":1, "owner":"personal","sources":checkpoint,
+                     "note":"Human-reviewed revision metadata only; never active policy rules."}
+    return next_baseline
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--network",action="store_true",
                    help="Opt-in HEAD checks of public allowlisted sites")
     p.add_argument("--timeout",type=float,default=3.0)
     p.add_argument("--output",type=Path)
+    p.add_argument("--adopt-baseline",type=Path,
+                   help="Explicitly accept metadata from a reviewed complete report, not rules")
     args=p.parse_args()
     try:
         if not 0.2 <= args.timeout <= 10:
