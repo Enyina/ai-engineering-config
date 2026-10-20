@@ -44,6 +44,11 @@ class EvidenceGates(unittest.TestCase):
         self.note["hypotheses"][1]["contradicts"]=[]
         with self.assertRaisesRegex(Exception,"not ruled out"):
             self.fn(self.note)
+    def test_wrong_check_cannot_confirm(self):
+        self.note["verification"]["evidence_ids"]=["e2"]
+        with self.assertRaises(Exception):
+            self.fn(self.note)
+
     def test_unresolved_is_legitimate(self):
         self.note["decision"]["confidence"]="unresolved"
         self.note["hypotheses"][1]["status"]="open"
