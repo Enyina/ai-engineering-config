@@ -1,6 +1,25 @@
-# AI Engineering Config
+# AI Engineering Config — public preview
 
-Canonical personal engineering rules: [AGENTS.md](AGENTS.md). **Reverse Engineering First** is the default for significant projects.
+**An evidence-led AI engineering companion for any GitHub user.** Bring reviewed, shared methods into your own project, investigate before guessing, and keep your personal experience separate from everyone else's.
+
+This was originally a personal configuration repository. It is now a **public product in transition**. New users should start with [neutral shared guidance](rules/shared/BASE.md), not the owner's legacy [personal policy](policies/personal/policy.json). The maintainer's personal profile is not the product default.
+
+## Start using it without being a contributor
+
+Install Git, Python 3 and [GitHub CLI](https://cli.github.com/), then authenticate with `gh auth login`. Clone this repository anywhere, enter the root of **a personal GitHub repository you own**, and run:
+
+```sh
+python3 /path/to/ai-engineering-config/bin/use
+python3 /path/to/ai-engineering-config/bin/use --apply
+```
+
+The first command previews changes; the second installs the neutral instructions locally in your own project. No developer access to this repository is necessary. Existing unrelated project instructions are preserved. This is not for employer-owned repositories unless the employer has independently approved an integration.
+
+**Learning:** anyone can draft a local review proposal with `bin/rule-learn`. Your GitHub account identifies where it belongs. No user's submissions automatically change your profile or shared rules. See [public product guide](docs/PUBLIC-PRODUCT.md) and [contribution guidelines](CONTRIBUTING.md).
+
+**Licensing decision pending:** This repository currently lacks an explicit open-source LICENSE file. Public visibility alone does not grant broad copying or redistribution rights. See [license decision](docs/LICENSE-DECISION.md) before distributing it as an open-source package.
+
+**Reverse Engineering First** remains an important shared principle. Maintainer-specific instructions are in [AGENTS.md](AGENTS.md); general rules are in [rules/shared/BASE.md](rules/shared/BASE.md).
 
 ## Investigate with evidence — from anywhere
 
@@ -8,7 +27,7 @@ Say **\"Investigate why this failed; verify the cause before recommending a fix.
 
 ## One-time setup on a new computer
 
-Clone this private repository and your personal project repositories into the same projects folder, then run `python3 bin/setup`. It identifies supported coding tools, previews safe project-scoped guidance, and asks once before installing. No global command permissions or employer repositories are changed. [New computer guide](docs/NEW-COMPUTER-SETUP.md).
+Clone this public repository and your personal project repositories into the same projects folder, then run `python3 bin/setup`. It identifies supported coding tools, previews safe project-scoped guidance, and asks once before installing. No global command permissions or employer repositories are changed. [New computer guide](docs/NEW-COMPUTER-SETUP.md).
 
 ## Easy everyday use
 
@@ -18,7 +37,7 @@ A compact optional command-line helper is available in [Easy Use](docs/EASY-USE.
 
 ## Personal design + engineering intelligence
 
-The private personal config now includes a sourced [design and engineering knowledge system](docs/PERSONAL-INTELLIGENCE.md): [public source catalog](knowledge/sources/catalog.json), [comparison patterns](knowledge/patterns/catalog.json), an evidence-linked [rule map](knowledge/rule-evidence.json), a deterministic `bin/ai-intelligence` advisor, scoped research skills and a **twice-daily, review-only** source-update check (approximately 08:00 and 20:00 Lagos time). It does not copy employers' rules or automatically promote research into policies.
+The shared public repository includes a sourced [design and engineering knowledge system](docs/PERSONAL-INTELLIGENCE.md): [public source catalog](knowledge/sources/catalog.json), [comparison patterns](knowledge/patterns/catalog.json), an evidence-linked [rule map](knowledge/rule-evidence.json), a deterministic `bin/ai-intelligence` advisor, scoped research skills and a **twice-daily, review-only** source-update check (approximately 08:00 and 20:00 Lagos time). It does not copy employers' rules or automatically promote research into policies.
 
 ```sh
 python3 bin/ai-intelligence validate

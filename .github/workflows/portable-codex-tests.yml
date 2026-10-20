@@ -4,6 +4,10 @@ on:
   pull_request:
     paths:
       - "bin/codex-portable.py"
+      - "bin/rule-learn"
+      - "bin/use"
+      - "rules/shared/**"
+      - "CONTRIBUTING.md"
       - "bin/evidence-check"
       - "skills/evidence-first-investigation/**"
       - "USE-ANYWHERE.md"
@@ -13,6 +17,10 @@ on:
     branches: [main]
     paths:
       - "bin/codex-portable.py"
+      - "bin/rule-learn"
+      - "bin/use"
+      - "rules/shared/**"
+      - "CONTRIBUTING.md"
       - "bin/evidence-check"
       - "skills/evidence-first-investigation/**"
       - "USE-ANYWHERE.md"

@@ -1,0 +1,169 @@
+#!/usr/bin/env python3
+"""Local-first learning proposals for a public multi-user product.
+
+No upload, PR creation, rule promotion or automatic project modification.
+Git author names/emails are NOT identity. Uses authenticated `gh api user`.
+"""
+import argparse
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+OWNER_ID = 91235626  # Verified repository owner's stable GitHub account ID.
+OWNER_LOGIN = "Enyina"
+ID = re.compile(r"^[a-z][a-z0-9-]{1,63}$")
+SENSITIVE = re.compile(
+    r"(?:ghp_|github_pat_|sk-proj-|gho_|ghu_)[A-Za-z0-9_-]{10,}"
+    r"|-----BEGIN [A-Z ]*PRIVATE KEY-----"
+    r"|(?i:bearer)\s+[A-Za-z0-9_.-]{12,}"
+    r"|(?i:(?:password|api_key|access_token|secret)\s*[:=]\s*[^\s,}]{8,})"
+)
+GOOD_EVIDENCE = {"reproduction", "test", "public_reference", "measurement", "user_research"}
+
+class LearningError(Exception):
+    pass
+
+def require(condition, message):
+    if not condition:
+        raise LearningError(message)
+
+def logged_in_user():
+    """Ask GitHub itself to identify this CLI session. Never trust git config."""
+    try:
+        p = subprocess.run(["gh", "api", "user"], capture_output=True, text=True,
+                           timeout=12, check=False)
+        if p.returncode != 0 or len(p.stdout) > 30000:
+            return None
+        identity = json.loads(p.stdout)
+        uid, login = identity.get("id"), identity.get("login")
+        if (type(uid) is int and uid > 0 and isinstance(login, str) and
+                re.fullmatch(r"[A-Za-z0-9-]{1,39}", login)):
+            return {"id":uid,"login":login}
+    except (OSError, ValueError, subprocess.TimeoutExpired, TypeError):
+        pass
+    return None
+
+def validated(record):
+    require(isinstance(record, dict) and
+        set(record) == {"schema_version","title","problem","lesson","scope",
+                        "category","evidence","limitations","verification",
+                        "privacy_review","sharing_consent"},
+        "Unexpected submission fields")
+    require(type(record["schema_version"]) is int and record["schema_version"] == 1,
+            "Unsupported learning submission")
+    for key in ("title","problem","lesson","limitations","verification"):
+        x=record[key]
+        require(isinstance(x,str) and 8 <= len(x.strip()) <= 1500,
+                "Missing or invalid description: "+key)
+    require(record["scope"] in ("general","category","project"),"Invalid scope")
+    require((record["category"] is None and record["scope"] == "general") or
+            (isinstance(record["category"],str) and ID.fullmatch(record["category"])),
+            "Scope and category disagree")
+    require(record["privacy_review"] is True and type(record["sharing_consent"]) is bool,
+            "A manual privacy review and explicit sharing choice are required")
+    evidence=record["evidence"]
+    require(isinstance(evidence,list) and 1 <= len(evidence) <= 12,
+            "Provide 1–12 distinct observations or references")
+    references=set()
+    direct=0
+    for item in evidence:
+        require(isinstance(item,dict) and
+                set(item) == {"kind","reference","finding","checked"},
+                "Invalid observation")
+        require(item["kind"] in GOOD_EVIDENCE and type(item["checked"]) is bool and
+                isinstance(item["reference"],str) and 4 <= len(item["reference"]) <= 500 and
+                isinstance(item["finding"],str) and 6 <= len(item["finding"]) <= 1500,
+                "Evidence must specify its type, verifiable location and finding")
+        require(item["reference"] not in references,"Duplicate evidence reference")
+        references.add(item["reference"])
+        direct += int(item["checked"])
+    raw=json.dumps(record,ensure_ascii=False)
+    require(not SENSITIVE.search(raw),"Possible credential or secret-like value")
+    # A checked flag is claimed by the contributor; does not prove the finding.
+    quality="ready_for_human_review" if direct and len(record["verification"].strip()) >= 12 else "needs_more_evidence"
+    return quality, raw
+
+def safe_dir(path):
+    require(not path.is_symlink(),"Refusing symlinked local profile storage")
+    path.mkdir(parents=True,exist_ok=True,mode=0o700)
+    require(path.is_dir() and not path.is_symlink(),"Unsafe local profile folder")
+    os.chmod(path,0o700)
+
+def save(base, identity, quality, raw, consent):
+    safe_dir(base)
+    if identity is None:
+        folder=base/"anonymous"/"proposals"
+        destination="unverified_local"
+    elif identity["id"] == OWNER_ID:
+        folder=base/"owner-private"/"proposals"
+        destination="owner_private"
+    else:
+        folder=base/"users"/str(identity["id"])/"proposals"
+        destination="user_private"
+    safe_dir(folder.parent)
+    safe_dir(folder)
+    proposal_id=hashlib.sha256(raw.encode("utf-8")).hexdigest()[:20]
+    path=folder/(proposal_id+".json")
+    require(not path.exists() and not path.is_symlink(),
+            "This submission already exists; review the existing proposal")
+    # No usernames/email/credentials are written inside the public repository.
+    payload={"schema_version":1,"status":quality,
+             "destination":destination,"source":"local_user_submission",
+             "sharing_consent":consent,
+             "active_rule_changed":False,
+             "public_submission_created":False,
+             "submission":json.loads(raw)}
+    with path.open("x",encoding="utf-8") as handle:
+        os.chmod(path,0o600)
+        json.dump(payload,handle,indent=2,ensure_ascii=False)
+        handle.write("\n")
+    return destination,proposal_id
+
+def main():
+    parser=argparse.ArgumentParser(description="Review a learning proposal without changing live rules")
+    parser.add_argument("--event",required=True,type=Path,
+                        help="Locally reviewed JSON describing a reusable lesson")
+    parser.add_argument("--apply",action="store_true",
+                        help="Save to a private local proposal folder, never to GitHub")
+    parser.add_argument("--storage",type=Path,
+                        help="Override local private storage location for development")
+    args=parser.parse_args()
+    try:
+        path=args.event
+        require(path.is_file() and not path.is_symlink() and path.stat().st_size <= 24000,
+                "Missing or unsafe local evidence file")
+        try:
+            record=json.loads(path.read_text(encoding="utf-8"))
+        except (UnicodeError,ValueError,OSError) as exc:
+            raise LearningError("Malformed local evidence file") from exc
+        quality, raw=validated(record)
+        identity=logged_in_user()
+        role=("owner" if identity and identity["id"] == OWNER_ID else
+              "contributor" if identity else "unverified")
+        result={"status":quality,"authenticated_role":role,
+                "proposed_scope":record["scope"],
+                "destination":("owner_private" if role=="owner" else
+                               "user_private" if role=="contributor" else "unverified_local"),
+                "consent_to_offer_for_shared_review":record["sharing_consent"],
+                "community_publication":"manual_opt_in_only",
+                "personal_rules_changed":False,
+                "shared_rules_changed":False}
+        if args.apply:
+            location=args.storage or Path.home()/".config"/"ai-engineering"/"learning"
+            dest, proposal=save(location,identity,quality,raw,record["sharing_consent"])
+            result["saved_locally"]=True
+            result["proposal_id"]=proposal
+        else:
+            result["saved_locally"]=False
+        print(json.dumps(result,indent=2))
+        return 0
+    except (OSError,LearningError,KeyError,TypeError) as exc:
+        print("Learning proposal refused: "+str(exc),file=sys.stderr)
+        return 2
+
+if __name__=="__main__":
+    sys.exit(main())

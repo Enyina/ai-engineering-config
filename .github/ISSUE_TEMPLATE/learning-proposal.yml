@@ -1,0 +1,42 @@
+name: Suggest an evidence-backed learning improvement
+description: Propose a reusable improvement for everyone, not a personal preference
+title: "Learning proposal: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: "Public issues are visible to everybody. Do not paste passwords, employer code, customer information, private logs or sensitive architecture."
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: Describe the general behavior you want to improve
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and reproduction
+      description: Publicly shareable tests, research, screenshots or observed facts; clearly label anything hypothetical
+    validations:
+      required: true
+  - type: textarea
+    id: applicability
+    attributes:
+      label: Where it applies and where it does not
+      description: Category, exceptions, tradeoffs and risks
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: How should we test this before adopting it?
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Review before submitting
+      options:
+        - label: I have removed confidential information and understand this issue will be public.
+          required: true

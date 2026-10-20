@@ -1,0 +1,6 @@
+# Keep ownership and releases reviewed.
+# Effective enforcement also requires a GitHub ruleset/branch protection.
+* @Enyina
+/.github/ @Enyina
+/policies/personal/ @Enyina
+/bin/rule-learn @Enyina
