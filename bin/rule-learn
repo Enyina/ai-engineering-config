@@ -40,8 +40,8 @@ def logged_in_user():
             return None
         identity = json.loads(p.stdout)
         uid, login = identity.get("id"), identity.get("login")
-        if type(uid) is int and uid > 0 and isinstance(login, str) and
-                re.fullmatch(r"[A-Za-z0-9-]{1,39}", login):
+        if (type(uid) is int and uid > 0 and isinstance(login, str) and
+                re.fullmatch(r"[A-Za-z0-9-]{1,39}", login)):
             return {"id":uid,"login":login}
     except (OSError, ValueError, subprocess.TimeoutExpired, TypeError):
         pass
