@@ -105,7 +105,8 @@ def analyze(note):
     if claim["cause_id"]:
         candidate = hypotheses[claim["cause_id"]]
     ready = (candidate is not None and candidate["status"] == "supported" and
-             verify["outcome"] == "passed" and
+             not candidate["contradicts"] and verify["outcome"] == "passed" and
+             bool(set(refs).intersection(candidate["supports"])) and
              all(h["status"] == "ruled_out" or k == claim["cause_id"]
                  for k,h in hypotheses.items()))
     if claim["confidence"] == "confirmed":
