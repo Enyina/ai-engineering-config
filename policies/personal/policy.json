@@ -126,7 +126,7 @@
     {
       "id": "investigation.evidence-gate",
       "kind": "required",
-      "text": "For substantial debugging, incidents, regressions or risky decisions, use Understand → Investigate → Gather evidence → Eliminate possibilities → Verify → Recommend → Learn. Inspect real authorized context, distinguish observations from hypotheses, test competing explanations, and do not claim a confirmed cause without direct evidence and verification. If access is missing, state the limitation and the exact next check. Diagnosis-only requests must not change code or settings. Record reusable sanitized lessons as human-reviewed proposals, never automatic universal rules. See skills/evidence-first-investigation/SKILL.md."
+      "text": "For substantial debugging, incidents, regressions or risky decisions, use Understand → Investigate → Gather evidence → Eliminate possibilities → Verify → Recommend → Learn. Inspect real authorized context, distinguish observations from hypotheses, test competing explanations, and do not claim a confirmed cause without direct evidence and verification. If access is missing, state the limitation and the exact next check. Diagnosis-only requests must not change code or settings. Record reusable sanitized lessons as human-reviewed proposals, never automatic universal rules. See https://github.com/Enyina/ai-engineering-config/blob/main/skills/evidence-first-investigation/SKILL.md when accessible."
     }
   ],
   "global": {

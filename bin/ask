@@ -123,6 +123,29 @@ def format_result(data, work):
         lines+=["","Nothing was changed. Ask your agent to assess the options against your project before implementing."]
     return "\n".join(lines)
 
+def is_investigation(question):
+    words=set(re.findall(r"[a-z0-9]+",question.lower()))
+    return bool(words.intersection({"investigate","investigation","diagnose",
+                                    "diagnosis","debug","why","failed","failing",
+                                    "failure","incident","regression"}))
+
+def investigation_guide(work):
+    name="Investigation guide"
+    lines=[name,"="*len(name),
+           "1. Understand: what was expected and what actually happened?",
+           "2. Investigate: trace the relevant authorized system and failure boundary.",
+           "3. Gather evidence: inspect actual code, tests or logs; label guesses.",
+           "4. Eliminate: test competing explanations, don't dismiss them without evidence.",
+           "5. Verify: reproduce or directly check the suspected mechanism.",
+           "6. Recommend: state confirmed, likely or unresolved and explain the next action.",
+           "7. Learn: propose a reusable lesson only after review.",
+           "",
+           "This is a plan, not a completed investigation. No files were changed.",
+           "Full process: https://github.com/Enyina/ai-engineering-config/blob/main/USE-ANYWHERE.md"]
+    if work:
+        lines+=["Workplace rules still apply; no internal records were imported or uploaded."]
+    return "\n".join(lines)
+
 def main():
     parser=argparse.ArgumentParser(description="Get easy design or coding advice without long commands.")
     parser.add_argument("question",nargs="+",help="Describe what you want improved in ordinary language")
@@ -142,6 +165,9 @@ def main():
             context={"kind":"employer"}
         else:
             context=project_context(args.here)
+        if is_investigation(task):
+            print(investigation_guide(context["kind"] == "employer"))
+            return 0
         command=[sys.executable,str(ADVISOR),"suggest","--domain",domain,"--task",task]
         if context["kind"]=="employer":
             command+=["--advisory-for-employer"]

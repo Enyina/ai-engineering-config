@@ -41,6 +41,20 @@ class FriendlyAskTests(unittest.TestCase):
         self.assertNotIn('"trust_domain"',out.stdout)
         self.assertFalse((self.workspace/"CLAUDE.md").exists())
 
+    def test_investigation_uses_evidence_process_not_generic_options(self):
+        out=self.ask("investigate why approval failed")
+        self.assertEqual(out.returncode,0,out.stderr)
+        self.assertIn("Eliminate",out.stdout)
+        self.assertIn("Verify",out.stdout)
+        self.assertIn("not a completed investigation",out.stdout)
+        self.assertNotIn("Root cause confirmed",out.stdout)
+
+    def test_work_investigation_stays_external_only(self):
+        out=self.ask("--work","diagnose why an operation failed")
+        self.assertEqual(out.returncode,0,out.stderr)
+        self.assertIn("Workplace rules still apply",out.stdout)
+        self.assertNotIn("moatt",out.stdout.lower())
+
     def test_automatic_engineering_detection(self):
         out=self.ask("make the webhook retry more reliable")
         self.assertEqual(out.returncode,0,out.stderr)
