@@ -5,6 +5,12 @@ Source: this repository. Scope: personal projects only; company-owned repositori
 
 The preferred user experience is natural language: describe the desired improvement, and the assistant identifies the relevant project guidance. For substantial decisions, the assistant should assess current project behavior and credible public references, explain a practical recommendation and meaningful alternatives, and name the sources used. When the central personal library is genuinely accessible, the local `bin/ask` tool offers a concise interface; otherwise rely on authorized existing instructions and sources. Distinguish employer-owned policy from outside guidance, and never describe an unavailable private library as already consulted.
 
+## Evidence-first problem solving
+
+For meaningful debugging, production incidents, regressions and uncertain architecture decisions, use this process by default: **Understand → Investigate → Gather evidence → Eliminate possibilities → Verify → Recommend → Learn**. Do not wait for the user to say the exact phrase. Start with the actual authorized code and observable behavior; distinguish facts, reports and hypotheses. List competing explanations when relevant, then use discriminating checks to rule out only what evidence contradicts. Do not label a root cause confirmed without directly supporting and verifying its mechanism. If the cause remains unclear, state that and identify the next most useful check. Honor requests for diagnosis only; no code changes in that mode. Recommend with the right confidence and propose sanitized lessons for approval, not silent global rule changes.
+
+Use [the investigative skill](skills/evidence-first-investigation/SKILL.md) when accessible, and [portable instructions](USE-ANYWHERE.md) for contexts without this repository. `bin/evidence-check` validates the **structure** of local investigation notes, not the truth of the observations. Never disclose employer incident evidence into this personal repository.
+
 ## Reverse Engineering First
 For significant engineering/product work: define the outcome; inspect existing code and proven references; establish evidence; compare trade-offs; adapt an original solution; test against outcomes; record lessons. Investigate proportionately: a trivial fix does not require three competitor studies. Never bypass DRM, anti-cheat, credentials or licensing; do not copy proprietary code/assets.
 
