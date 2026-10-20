@@ -1,5 +1,7 @@
 # Just ask for what you want
 
+For an investigation, simply say **\"Investigate why this failed; show the evidence and don't fix anything yet.\"** The project rules now require an evidence-first sequence before claiming a cause. In a new chat, browser or assistant that cannot read the configuration, open [Use Anywhere](../USE-ANYWHERE.md) and copy its short self-contained instruction. A GitHub link alone does not install behavior in all AI products.
+
 The default user experience is **no commands, no rule names, and no choosing an AI model**. Open your project in Codex, Claude Code, Cursor or Antigravity and describe the actual outcome:
 
 > Make the garment editor easier to use on a phone.
