@@ -66,3 +66,7 @@ The guidance now asks assistants to check possible causes against real evidence 
 **Use the approach in other assistants**
 
 A short shareable instruction lets you bring the same approach into a new chat. It doesn't grant access to private systems or files.
+
+**More useful answers when something fails**
+
+The short helper now recognizes questions about failures and explains how to check possible causes. It doesn't pretend a cause has been proven without looking at evidence.
