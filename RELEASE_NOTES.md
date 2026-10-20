@@ -70,3 +70,19 @@ A short shareable instruction lets you bring the same approach into a new chat. 
 **More useful answers when something fails**
 
 The short helper now recognizes questions about failures and explains how to check possible causes. It doesn't pretend a cause has been proven without looking at evidence.
+
+## October 20, 2026 — Public preview
+
+**Anyone can use the shared guidance**
+
+People can now add the general problem-solving guidance to their own projects without having permission to change this repository. Their existing project instructions are kept.
+
+**Your own lessons stay yours**
+
+New learning suggestions are kept separately for each person. The repository owner's proposals are stored in a different private local area. Nothing from another person automatically changes anyone else's guidance.
+
+**Community suggestions need evidence and review**
+
+People can suggest improvements for everyone, but those ideas are not used as shared rules until they are checked and accepted. No private records are uploaded automatically.
+
+This is an early public preview, not a hosted account service. The final product name and reuse license have not been chosen.
