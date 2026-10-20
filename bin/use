@@ -1,0 +1,161 @@
+#!/usr/bin/env python3
+"""Preview-first public install of neutral guidance. No maintainer personal rules.
+
+From your own GitHub repository:
+  python3 /path/to/product/bin/use
+  python3 /path/to/product/bin/use --apply
+"""
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT=Path(__file__).resolve().parents[1]
+BEGIN="<!-- shared-ai-rules:begin -->"
+END="<!-- shared-ai-rules:end -->"
+ORIGIN=re.compile(r"^(?:https://github\.com/|git@github\.com:)([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+?)(?:\.git)?/?$")
+
+class SetupError(Exception):
+    pass
+
+def require(ok,msg):
+    if not ok:
+        raise SetupError(msg)
+
+def git(directory,*args):
+    try:
+        return subprocess.run(["git","-C",str(directory),*args],capture_output=True,
+                              text=True,timeout=12,check=False)
+    except (OSError,subprocess.TimeoutExpired) as exc:
+        raise SetupError("Git is unavailable") from exc
+
+def identity():
+    try:
+        p=subprocess.run(["gh","api","user"],capture_output=True,text=True,timeout=12)
+        if p.returncode:
+            return None
+        v=json.loads(p.stdout)
+        if type(v.get("id")) is int and v["id"]>0 and
+                isinstance(v.get("login"),str) and re.fullmatch(r"[A-Za-z0-9-]{1,39}",v["login"]):
+            return v
+    except (OSError,ValueError,subprocess.TimeoutExpired):
+        pass
+    return None
+
+def inspect(workspace):
+    workspace=workspace.resolve()
+    require(workspace.is_dir() and not workspace.is_symlink(),"Invalid workspace")
+    top=git(workspace,"rev-parse","--show-toplevel")
+    require(top.returncode==0 and Path(top.stdout.strip()).resolve()==workspace,
+            "Open the root of the Git repository you own")
+    remote=git(workspace,"remote","get-url","origin")
+    require(remote.returncode==0,"Add or verify your own GitHub origin first")
+    parsed=ORIGIN.fullmatch(remote.stdout.strip())
+    require(parsed is not None,"Only supported GitHub repositories can be installed")
+    marker_dir=workspace/".ai-rules"
+    require(not marker_dir.is_symlink(),"Unsafe rules directory")
+    entries=[marker_dir/n for n in ("workspace.json","workspace.local.json")
+             if (marker_dir/n).exists() or (marker_dir/n).is_symlink()]
+    require(len(entries)<=1,"Conflicting workspace ownership markers")
+    if entries:
+        m=entries[0]
+        require(m.is_file() and not m.is_symlink() and m.stat().st_size<8192,
+                "Unsafe ownership marker")
+        data=json.loads(m.read_text(encoding="utf-8"))
+        require(data=={"schema_version":1,"trust_domain":"personal",
+                       "policy_owner":"personal"},
+                "Employer or unclassified markers are not eligible for personal setup")
+    return workspace,parsed.group(1),bool(entries)
+
+def checked_path(root,relative):
+    cur=root
+    for part in Path(relative).parts:
+        cur=cur/part
+        require(not cur.is_symlink(),"Symlinked instructions cannot be edited")
+    return cur
+
+def planned(root,marker_exists):
+    body=(ROOT/"rules/shared/BASE.md").read_text(encoding="utf-8")
+    block=BEGIN+"\n"+body.rstrip()+"\n"+END
+    path=checked_path(root,"AGENTS.md")
+    if path.exists():
+        require(path.is_file() and path.stat().st_size<256000,"Unsafe AGENTS.md")
+        old=path.read_text(encoding="utf-8")
+    else:
+        old=""
+    require(old.count(BEGIN)==old.count(END) and old.count(BEGIN)<=1,
+            "Existing shared instructions were modified; review before continuing")
+    if BEGIN in old:
+        a=old.index(BEGIN)
+        b=old.index(END)+len(END)
+        require(a<b,"Malformed managed instructions")
+        new=old[:a]+block+old[b:]
+    else:
+        new=old.rstrip()+"\n\n"+block+"\n" if old else block+"\n"
+    updates={"AGENTS.md":new}
+    claude=checked_path(root,"CLAUDE.md")
+    if not claude.exists():
+        updates["CLAUDE.md"]="# Shared project guidance\n\n@AGENTS.md\n"
+    cursor=checked_path(root,".cursor/rules/shared-engineering.mdc")
+    if not cursor.exists():
+        updates[".cursor/rules/shared-engineering.mdc"]=(
+            "---\ndescription: Public shared engineering guidance\nalwaysApply: true\n---\n\n"
+            "Follow the shared section in the root AGENTS.md. Employer policy takes precedence.\n")
+    if not marker_exists:
+        updates[".ai-rules/workspace.json"]=json.dumps(
+            {"schema_version":1,"trust_domain":"personal","policy_owner":"personal"},
+            indent=2)+"\n"
+    return updates
+
+def main():
+    ap=argparse.ArgumentParser(description="Install public shared guidance into your own GitHub repo")
+    ap.add_argument("--workspace",type=Path,default=Path.cwd())
+    ap.add_argument("--apply",action="store_true",help="Confirm and install shared instructions")
+    opts=ap.parse_args()
+    try:
+        user=identity()
+        require(user is not None,"Sign into GitHub CLI (gh auth login) to verify your identity")
+        root,remote_owner,marker=inspect(opts.workspace)
+        require(remote_owner.lower()==user["login"].lower(),
+                "GitHub origin owner differs from the authenticated account; no changes made")
+        changes=planned(root,marker)
+        pending=[(name,contents) for name,contents in changes.items()
+                 if not (root/name).is_file() or (root/name).read_text(encoding="utf-8")!=contents]
+        print("Shared guidance for your own project (no maintainer personal rules)")
+        print("GitHub account:",user["login"])
+        print("Changes:",", ".join(name for name,_ in pending) or "none")
+        if not opts.apply:
+            print("Preview only. Run the same command with --apply to install.")
+            return 0
+        # Ensure no existing files are overwritten except the explicitly managed AGENTS section.
+        for name,contents in pending:
+            target=checked_path(root,name)
+            if name=="AGENTS.md" and target.exists():
+                before=target.read_text(encoding="utf-8")
+                if BEGIN not in before:
+                    require(len(before)<256000,"Unsafe instructions")
+            elif target.exists():
+                raise SetupError("Existing unmanaged instruction file: "+name)
+        for name,contents in pending:
+            target=checked_path(root,name)
+            require(not target.exists() or target.is_file(),"Unsafe destination")
+            target.parent.mkdir(parents=True,exist_ok=True)
+            tmp=target.with_name(target.name+".shared-ai-tmp")
+            require(not tmp.exists() and not tmp.is_symlink(),"Temporary file collision")
+            try:
+                tmp.write_text(contents,encoding="utf-8")
+                os.replace(tmp,target)
+            finally:
+                if tmp.exists():
+                    tmp.unlink()
+        print("Installed public guidance locally. No private owner or employer rules were copied.")
+        return 0
+    except (SetupError,OSError,UnicodeError,ValueError,KeyError) as exc:
+        print("Setup refused: "+str(exc),file=sys.stderr)
+        return 2
+
+if __name__=="__main__":
+    sys.exit(main())
