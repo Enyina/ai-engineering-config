@@ -2,6 +2,10 @@
 
 Canonical personal engineering rules: [AGENTS.md](AGENTS.md). **Reverse Engineering First** is the default for significant projects.
 
+## Investigate with evidence — from anywhere
+
+Say **\"Investigate why this failed; verify the cause before recommending a fix.\"** Your verified personal projects inherit an evidence-first process: Understand → Investigate → Gather evidence → Eliminate possibilities → Verify → Recommend → Learn. [Use Anywhere](USE-ANYWHERE.md) is a single shareable prompt for a new chat or agent that has not loaded this repository. A connected or locally installed agent can read the full [investigation skill](skills/evidence-first-investigation/SKILL.md). Optional local `bin/evidence-check` validates evidence-record structure, not the truth of findings. It does not upload private work data or change active rules.
+
 ## One-time setup on a new computer
 
 Clone this private repository and your personal project repositories into the same projects folder, then run `python3 bin/setup`. It identifies supported coding tools, previews safe project-scoped guidance, and asks once before installing. No global command permissions or employer repositories are changed. [New computer guide](docs/NEW-COMPUTER-SETUP.md).
