@@ -38,8 +38,8 @@ def identity():
         if p.returncode:
             return None
         v=json.loads(p.stdout)
-        if type(v.get("id")) is int and v["id"]>0 and
-                isinstance(v.get("login"),str) and re.fullmatch(r"[A-Za-z0-9-]{1,39}",v["login"]):
+        if (type(v.get("id")) is int and v["id"]>0 and
+                isinstance(v.get("login"),str) and re.fullmatch(r"[A-Za-z0-9-]{1,39}",v["login"])):
             return v
     except (OSError,ValueError,subprocess.TimeoutExpired):
         pass
