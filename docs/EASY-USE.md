@@ -42,3 +42,7 @@ If you prefer the shortest possible terminal command, you can configure your she
 - Personal project detection intentionally refuses a missing or unfamiliar GitHub origin or missing ownership marker. Never add an arbitrary origin just to bypass checks.
 - Research suggestions are *hypotheses* to evaluate, not approved organizational rules, and nothing is written until an authorized development task proceeds.
 - Source checks still run twice daily and flag changes for review; they do not automatically rewrite policies.
+
+## Short investigation questions
+
+The optional one-sentence helper recognizes questions like `python3 bin/ask "investigate why this failed"` and shows the evidence-first steps instead of unrelated design options. That output is only a plan, not a finding: an assistant with authorized tools still needs to inspect real evidence.
