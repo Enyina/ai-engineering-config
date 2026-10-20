@@ -52,6 +52,21 @@ class EvidenceGates(unittest.TestCase):
         self.note["verification"]["evidence_ids"]=["nonexistent"]
         with self.assertRaises(Exception):
             self.fn(self.note)
+    def test_process_is_a_required_shared_personal_rule(self):
+        pack=json.loads((ROOT/"policies/personal/policy.json").read_text())
+        self.assertIn("investigation.evidence-gate",pack["global"]["rules"])
+        item=next(x for x in pack["rules"] if x["id"]=="investigation.evidence-gate")
+        self.assertEqual(item["kind"],"required")
+        self.assertIn("Eliminate possibilities",item["text"])
+
+    def test_anywhere_file_is_self_contained(self):
+        process=(ROOT/"USE-ANYWHERE.md").read_text()
+        for phase in ("Understand","Investigate","Gather evidence","Eliminate possibilities",
+                      "Verify","Recommend","Learn"):
+            self.assertIn(phase,process)
+        self.assertIn("diagnosis only",process)
+        self.assertIn("private",process.lower())
+
     def test_sample_is_read_only(self):
         with tempfile.TemporaryDirectory() as folder:
             r=subprocess.run([sys.executable,str(SCRIPT),"--sample"],cwd=folder,capture_output=True,text=True)
