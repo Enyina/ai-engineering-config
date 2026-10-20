@@ -2,6 +2,8 @@
 
 This repository stores **reviewable knowledge**, not automatic model training. Agents must fetch/read the relevant instructions each session; cross-tool enforcement and automatic synchronization are not guaranteed.
 
+For a failure, useful implementation, review or benchmark, use the evidence-first investigation workflow first. A suspected cause is not a confirmed cause until its specific mechanism is directly verified; lack of evidence does not rule out competing explanations. See [the portable process](../USE-ANYWHERE.md) and [investigation skill](../skills/evidence-first-investigation/SKILL.md).
+
 For a failure, useful implementation, review or benchmark:
 
 1. Capture **observation** and evidence (sanitized). State whether observed locally, tested, documented or hypothesized.

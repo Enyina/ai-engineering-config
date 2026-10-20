@@ -5,6 +5,8 @@ description: Compare credible coding and architecture strategies for authorized 
 
 # Evidence-led engineering
 
+For significant uncertainty or a suspected defect, first follow [Evidence-first investigation](../evidence-first-investigation/SKILL.md): understand the real symptom, trace the system, collect sourced observations, eliminate competing causes using tests, verify the mechanism, recommend proportionately and propose any durable learning for review. Never call an inferred mechanism a confirmed root cause just because the fix seems reasonable.
+
 1. Inspect current code, user outcome, architecture, repository state, tests and failure evidence in an authorized environment. Check exact tool/framework versions before relying on documentation. If an employer has no specific rule, still compare official public guidance and **general** reusable personal approaches, naming their provenance and checking employer policy before adoption. Suggestions do not become company rules automatically. Use `bin/ai-intelligence suggest --advisory-for-employer` with a non-confidential topic when needed.
 2. Use the curated `knowledge/sources/catalog.json` and actual official upstream docs, standards and working examples. Prefer OWASP/NIST for security, official languages/frameworks for API semantics, Playwright/Storybook for UI testing, and scoped Google engineering advice for review discipline. Its upstream engineering-practices repo is archived; do not treat it as a current evolving standard.
 3. From central config run `python3 bin/ai-intelligence suggest --workspace <repo> --project <id> --domain engineering --task "<specific technical problem>"` to inspect genuinely different options; this never writes code or selects a winner.

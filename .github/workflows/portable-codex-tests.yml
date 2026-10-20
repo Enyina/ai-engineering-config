@@ -4,12 +4,18 @@ on:
   pull_request:
     paths:
       - "bin/codex-portable.py"
+      - "bin/evidence-check"
+      - "skills/evidence-first-investigation/**"
+      - "USE-ANYWHERE.md"
       - "tests/**"
       - ".github/workflows/portable-codex-tests.yml"
   push:
     branches: [main]
     paths:
       - "bin/codex-portable.py"
+      - "bin/evidence-check"
+      - "skills/evidence-first-investigation/**"
+      - "USE-ANYWHERE.md"
       - "tests/**"
       - ".github/workflows/portable-codex-tests.yml"
 

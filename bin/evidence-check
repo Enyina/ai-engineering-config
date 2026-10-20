@@ -1,0 +1,183 @@
+#!/usr/bin/env python3
+"""Read-only structural evidence gate for investigation notes.
+
+This cannot validate the truth of supplied evidence. It prevents unsupported
+'confirmed root cause' claims from passing the note's declared evidence gates.
+No network, code execution, project writes, or uploads.
+"""
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+
+ID = re.compile(r"^[a-z][a-z0-9_-]{0,60}$")
+KINDS = {"test", "log", "trace", "code", "documentation", "observation", "user_report"}
+DIRECT = {"test", "log", "trace", "code", "observation"}
+STATUSES = {"supported", "ruled_out", "open"}
+CLAIMS = {"confirmed", "likely", "unresolved"}
+MAX_SIZE = 65536
+
+class InvalidEvidence(Exception):
+    pass
+
+def require(cond, message):
+    if not cond:
+        raise InvalidEvidence(message)
+
+def words(value):
+    return isinstance(value, str) and bool(value.strip()) and len(value) <= 1500
+
+def ids(values, known, label):
+    require(isinstance(values, list) and len(values) == len(set(values)) and
+            all(isinstance(x, str) and x in known for x in values),
+            label + " contains missing or duplicate evidence IDs")
+    return values
+
+def analyze(note):
+    require(isinstance(note, dict) and
+            set(note) == {"schema_version", "problem", "evidence", "hypotheses",
+                          "verification", "decision", "learning"},
+            "Unsupported investigation record")
+    require(type(note["schema_version"]) is int and note["schema_version"] == 1,
+            "Unsupported investigation record version")
+    problem = note["problem"]
+    require(isinstance(problem, dict) and
+            set(problem) == {"observed", "expected", "scope"} and
+            all(words(problem[k]) for k in problem),
+            "Describe the observed failure, expected outcome and scope")
+    evidence = {}
+    require(isinstance(note["evidence"], list) and len(note["evidence"]) <= 100,
+            "Invalid evidence list")
+    for item in note["evidence"]:
+        require(isinstance(item, dict) and
+                set(item) == {"id", "kind", "finding", "reference", "confidence"} and
+                isinstance(item["id"], str) and ID.fullmatch(item["id"]) and
+                item["id"] not in evidence and item["kind"] in KINDS and
+                all(words(item[k]) for k in ("finding", "reference")) and
+                item["confidence"] in {"direct", "reported", "inferred"},
+                "Invalid, unreferenced, or duplicated evidence")
+        evidence[item["id"]] = item
+    hypotheses = {}
+    require(isinstance(note["hypotheses"], list) and len(note["hypotheses"]) <= 30,
+            "Invalid hypothesis list")
+    for hypo in note["hypotheses"]:
+        require(isinstance(hypo, dict) and
+                set(hypo) == {"id", "explanation", "status", "supports", "contradicts"},
+                "Invalid hypothesis definition")
+        key = hypo["id"]
+        require(isinstance(key, str) and ID.fullmatch(key) and
+                key not in hypotheses and words(hypo["explanation"]) and
+                hypo["status"] in STATUSES, "Invalid hypothesis")
+        support = ids(hypo["supports"], evidence, "Support")
+        against = ids(hypo["contradicts"], evidence, "Contradiction")
+        require(not set(support).intersection(against),
+                "One evidence item cannot both prove and refute the same hypothesis")
+        if hypo["status"] == "ruled_out":
+            require(against and any(evidence[i]["confidence"] == "direct" for i in against),
+                    "A hypothesis is not ruled out just because evidence is missing")
+        if hypo["status"] == "supported":
+            require(support and any(evidence[i]["confidence"] == "direct" for i in support),
+                    "A supported hypothesis needs direct evidence")
+        hypotheses[key] = hypo
+    verify = note["verification"]
+    require(isinstance(verify, dict) and
+            set(verify) == {"method", "evidence_ids", "outcome"} and
+            isinstance(verify["outcome"], str) and
+            verify["outcome"] in {"passed", "failed", "not_run"} and
+            isinstance(verify["method"], str) and len(verify["method"]) <= 1500,
+            "Invalid verification description")
+    refs = ids(verify["evidence_ids"], evidence, "Verification")
+    if verify["outcome"] == "passed":
+        require(words(verify["method"]) and refs and
+                any(evidence[i]["confidence"] == "direct" and
+                    evidence[i]["kind"] in DIRECT for i in refs),
+                "Passed verification requires referenced direct observations")
+    claim = note["decision"]
+    require(isinstance(claim, dict) and
+            set(claim) == {"confidence", "cause_id", "recommendation"} and
+            claim["confidence"] in CLAIMS and
+            (claim["cause_id"] is None or claim["cause_id"] in hypotheses) and
+            isinstance(claim["recommendation"], str) and
+            len(claim["recommendation"]) <= 2000,
+            "Invalid decision")
+    candidate = None
+    if claim["cause_id"]:
+        candidate = hypotheses[claim["cause_id"]]
+    ready = (candidate is not None and candidate["status"] == "supported" and
+             not candidate["contradicts"] and verify["outcome"] == "passed" and
+             bool(set(refs).intersection(candidate["supports"])) and
+             all(h["status"] == "ruled_out" or k == claim["cause_id"]
+                 for k,h in hypotheses.items()))
+    if claim["confidence"] == "confirmed":
+        require(ready, "Confirmed cause requires direct supporting evidence, a passed "
+                "verification, and elimination of recorded competing hypotheses")
+    lesson = note["learning"]
+    require(isinstance(lesson, dict) and
+            set(lesson) == {"status", "scope", "reviewed"} and
+            lesson["status"] in {"none", "candidate"} and
+            lesson["scope"] in {"none", "project", "category", "general"} and
+            type(lesson["reviewed"]) is bool,
+            "Invalid learning disposition")
+    if lesson["status"] == "candidate":
+        require(lesson["scope"] != "none", "Lesson candidate needs a scope")
+    else:
+        require(lesson["scope"] == "none", "No lesson cannot have a promotion scope")
+    return {
+        "structurally_valid": True,
+        "evidence_items": len(evidence),
+        "hypotheses": {status: sum(h["status"] == status for h in hypotheses.values())
+                       for status in ("supported", "ruled_out", "open")},
+        "claimed_confidence": claim["confidence"],
+        "confirmation_gate": "passed" if ready else "not_met",
+        "learning": "review_candidate_only" if lesson["status"] == "candidate"
+                    else "no_rule_change",
+        "active_rules_changed": False,
+        "caution": ("Checks references and declared verification, not whether the "
+                    "underlying evidence is real, sufficient or correctly interpreted.")
+    }
+
+SAMPLE = {
+    "schema_version": 1,
+    "problem": {"observed":"Describe a failure", "expected":"Expected result",
+                "scope":"Authorized environment"},
+    "evidence": [],
+    "hypotheses":[{"id":"h1", "explanation":"One possible cause", "status":"open",
+                   "supports":[], "contradicts":[]}],
+    "verification":{"method":"", "evidence_ids":[], "outcome":"not_run"},
+    "decision":{"confidence":"unresolved", "cause_id":None,
+                "recommendation":"Check the failing boundary before proposing a fix."},
+    "learning":{"status":"none", "scope":"none", "reviewed":False}
+}
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("file", type=Path, nargs="?", help="Existing local JSON investigation note")
+    parser.add_argument("--sample", action="store_true", help="Print a starting template without writing")
+    parser.add_argument("--json", action="store_true", help="Print structured gate assessment")
+    args=parser.parse_args()
+    try:
+        require(bool(args.sample) != bool(args.file), "Specify one existing file or --sample")
+        if args.sample:
+            print(json.dumps(SAMPLE, indent=2))
+            return 0
+        path=args.file
+        require(path.is_file() and not path.is_symlink() and
+                path.stat().st_size <= MAX_SIZE,
+                "Evidence file must be an existing small local JSON file")
+        result=analyze(json.loads(path.read_text(encoding="utf-8")))
+        if args.json:
+            print(json.dumps(result,indent=2))
+        else:
+            print("Investigation evidence structure: valid")
+            print("Cause recorded as:",result["claimed_confidence"])
+            print("Confirmation gate:",result["confirmation_gate"])
+            print("Learning:",result["learning"])
+            print(result["caution"])
+        return 0
+    except (InvalidEvidence, OSError, UnicodeError, ValueError, KeyError, TypeError) as exc:
+        print("Evidence check refused: " + str(exc),file=sys.stderr)
+        return 2
+
+if __name__ == "__main__":
+    sys.exit(main())

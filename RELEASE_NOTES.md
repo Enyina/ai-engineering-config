@@ -55,3 +55,14 @@ Personal projects can now get design or coding suggestions from a short question
 You can now set up your personal projects with one guided step after getting your code. It detects supported assistants, shows which projects it recognizes, and adds only the relevant guidance without replacing your existing instructions. You can review changes first, and restore the saved originals if you haven't edited them since setup.
 
 It does not connect account logins or touch workplace projects.
+
+
+## October 20, 2026
+
+**Investigations based on evidence**
+
+The guidance now asks assistants to check possible causes against real evidence before reaching conclusions. When a problem remains unclear, they should explain what they still need to verify.
+
+**Use the approach in other assistants**
+
+A short shareable instruction lets you bring the same approach into a new chat. It doesn't grant access to private systems or files.
