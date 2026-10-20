@@ -1,5 +1,5 @@
-# Global Engineering Instructions
-Source: this repository. Scope: personal projects only; company-owned repositories follow their own approved policies. This repository is NOT an employer policy source.
+# Maintainer engineering instructions
+These are the original maintainer's personal engineering preferences for work on this repository. **They are not product defaults for outside users.** For public usage, follow [rules/shared/BASE.md](rules/shared/BASE.md). Public contributor proposals require evidence, privacy review and a maintainer decision before any shared rule changes. Employer policies remain separate.
 
 ## Everyday requests
 
